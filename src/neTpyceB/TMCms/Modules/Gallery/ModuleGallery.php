@@ -6,6 +6,10 @@ use neTpyceB\TMCms\Files\FileSystem;
 use neTpyceB\TMCms\Modules\Clients\Object\Client;
 use neTpyceB\TMCms\Modules\Clients\Object\Collection;
 use neTpyceB\TMCms\Modules\Clients\Object\Offer;
+use neTpyceB\TMCms\Modules\Gallery\Object\Gallery;
+use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCategory;
+use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
+use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
 use neTpyceB\TMCms\Modules\IModule;
 use neTpyceB\TMCms\Modules\Templater\ModuleTemplater;
 use \neTpyceB\TMCms\Strings\UID;
@@ -22,7 +26,26 @@ class ModuleGallery implements IModule {
 	}
 
 	public static $tables = array(
-		'images' => 'm_<gallery',
+		'galleries' => 'm_gallery',
 		'categories' => 'm_gallery_categories'
 	);
+
+    public static function getCategoryPairs() {
+        $category_collection = new GalleryCategoryCollection();
+        return $category_collection->getPairs('title');
+    }
+
+    public static function getGalleryImagesPath($id)
+    {
+        return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
+    }
+
+    public static function getGalleryImages(Gallery $gallery)
+    {
+        $images_collection = new ImageCollection();
+        $images_collection->setWhereItemId('gallery');
+        $images_collection->setWhereItemId($gallery->getId());
+
+        return $images_collection->getAsArrayOfObjects();
+    }
 }

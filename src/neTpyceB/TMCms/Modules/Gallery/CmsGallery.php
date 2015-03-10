@@ -2,14 +2,18 @@
 namespace neTpyceB\TMCms\Modules\Gallery;
 
 use neTpyceB\TMCms\Admin\Menu;
+use neTpyceB\TMCms\Admin\Messages;
+use neTpyceB\TMCms\DB\SQL;
 use neTpyceB\TMCms\Files\FileSystem;
 use neTpyceB\TMCms\HTML\BreadCrumbs;
 use neTpyceB\TMCms\HTML\Cms\CmsForm;
+use neTpyceB\TMCms\HTML\Cms\CmsFormHelper;
 use neTpyceB\TMCms\HTML\Cms\CmsTable;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnActive;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnData;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnDelete;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnEdit;
+use neTpyceB\TMCms\HTML\Cms\Column\ColumnOrder;
 use neTpyceB\TMCms\HTML\Cms\Columns;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsButton;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsHtml;
@@ -20,77 +24,194 @@ use neTpyceB\TMCms\HTML\Cms\Filter\Select;
 use neTpyceB\TMCms\HTML\Cms\Filter\Text;
 use neTpyceB\TMCms\HTML\Cms\FilterForm;
 use neTpyceB\TMCms\HTML\Cms\Widget\FileManager;
-use neTpyceB\TMCms\Modules\Clients\Object\Client;
-use neTpyceB\TMCms\Modules\Clients\Object\Collection;
-use neTpyceB\TMCms\Modules\Clients\Object\Group;
-use neTpyceB\TMCms\Modules\Clients\Object\GroupCollection;
+use neTpyceB\TMCms\Modules\Gallery\ModuleGallery;
+use neTpyceB\TMCms\Modules\Gallery\Object\Gallery;
+use neTpyceB\TMCms\Modules\gallery\Object\GalleryCategory;
+use neTpyceB\TMCms\Modules\gallery\Object\GalleryCategoryCollection;
+use neTpyceB\TMCms\Modules\Images\ModuleImages;
+use neTpyceB\TMCms\Modules\Images\Object\Image;
+use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
+use neTpyceB\TMCms\HTML\Cms\CmsGallery as AdminGallery;
+
 
 defined('INC') or exit;
 
 Menu::getInstance()
-    ->addSubMenuItem('groups', 'Аккаунты')
+    ->addSubMenuItem('categories')
 ;
 
 class CmsGallery
 {
 
 
-    /** Clients */
+    /** gallery */
 
     public static function _default()
     {
-        $client_groups = new Group;
+        echo self::__gallery_add_edit_form()
+            ->setAction('?p='. P .'&do=_gallery_add')
+            ->setSubmitButton(new CmsButton('Create new gallery'))
+        ;
+
+        echo '<br><br>';
+
+        $sql = '
+SELECT
+    `g`.`id`,
+    `g`.`active`,
+	`d1`.`' . LNG . '` AS `title`,
+	`d2`.`' . LNG . '` AS `category`
+FROM `' . ModuleGallery::$tables['galleries'] . '` AS `g`
+LEFT JOIN `'. ModuleGallery::$tables['categories'] .'` AS `c` ON `c`.`id` = `g`.`category_id`
+LEFT JOIN `cms_dstrings` AS `d1` ON `d1`.`id` = `g`.`title`
+LEFT JOIN `cms_dstrings` AS `d2` ON `d2`.`id` = `c`.`title`
+ORDER BY `g`.`order`
+        ';
 
         echo CmsTable::getInstance()
-            ->addDataSql('SELECT * FROM `' . ModuleClients::$tables['clients'] . '` ORDER BY `login`')
-            ->addColumn(ColumnData::getInstance('login')->enableOrderableColumn())
-            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=edit&id={%id%}')->width('1%')->value('edit'))
-            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_active&id={%id%}')->enableOrderableColumn())
-            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_delete&id={%id%}'))
-            ->attachFilterForm(
-                FilterForm::getInstance()
-                    ->setCaption('<a href="?p=' . P . '&do=add">Add Client</a>')
-                    ->addFilter('Group', Select::getInstance('group_id')->setOptions(array(-1 => 'All') + $client_groups->getPairs())->ignoreValue(-1))
-                    ->addFilter('Login', Text::getInstance('login')->actAs('like'))
-            );
+            ->addDataSql($sql)
+            ->addColumn(ColumnData::getInstance('title')->enableOrderableColumn())
+            ->addColumn(ColumnData::getInstance('category')->enableOrderableColumn()->width('1%')->nowrap(true))
+            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=gallery_edit&id={%id%}')->width('1%')->value('edit'))
+            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_gallery_active&id={%id%}')->enableOrderableColumn())
+            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_gallery_delete&id={%id%}'))
+        ;
     }
 
-    private static function __clients_add_edit_form()
+    private static function __gallery_add_edit_form()
     {
-        $client_groups = new Group;
-
         return CmsForm::getInstance()
-            ->addField('Group', CmsSelect::getInstance('group_id')->setOptions($client_groups->getPairs()))
-            ->addField('Login', CmsInputText::getInstance('login'))
-            ->addField('Password', CmsInputPassword::getInstance('password')->reveal(true)->help('Leave empty to keep current'));
+            ->addField('Title', CmsInputText::getInstance('title')->enableMultiLng())
+            ->addField('Category', CmsSelect::getInstance('category_id')->setOptions(ModuleGallery::getCategoryPairs()))
+        ;
     }
 
     public static function add()
     {
-        echo self::__clients_add_edit_form()
+        echo self::__gallery_add_edit_form()
             ->setAction('?p=' . P . '&do=_add')
             ->setSubmitButton(new CmsButton('Add'));
     }
 
-    public static function edit()
+    public static function gallery_edit()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        $data = q_assoc_row('SELECT * FROM `' . ModuleClients::$tables['clients'] . '` WHERE `id` = "' . $id . '"');
-        unset ($data['password']);
+        $gallery = new Gallery($id);
 
-        echo self::__clients_add_edit_form()
-            ->addData($data)
-            ->setAction('?p=' . P . '&do=_edit&id=' . $id)
+        echo BreadCrumbs::getInstance()
+            ->addCrumb($gallery->getTitle(), '?p='. P .'&highlight='. $gallery->getId())
+            ->addCrumb('Images')
+        ;
+
+        echo self::__gallery_add_edit_form()
+            ->addData(q_assoc_row('SELECT * FROM `' . ModuleGallery::$tables['galleries'] . '` WHERE `id` = "' . $id . '"'))
+            ->setAction('?p=' . P . '&do=_gallery_edit&id=' . $id)
             ->setSubmitButton(new CmsButton('Update'));
+
+
+        // Images
+
+        // Get existing images in DB
+        $image_collection = new ImageCollection;
+        $image_collection->setWhereItemType('gallery');
+        $image_collection->setWhereItemId($gallery->getId());
+        $image_collection->setOrderByField('order');
+        $images = $image_collection->getAsArrayOfObjectData();
+
+        // Get images on disk
+        $path = ModuleImages::getPathForItemImages('gallery', $gallery->getId());
+
+        // Files in DB
+        $existing_images_in_db = [];
+        foreach ($images as $image) {
+            /** @var Image $image */
+            $existing_images_in_db[$image['id']] = $image['image'];
+        }
+
+        // Files on disk
+        FileSystem::mkDir(DIR_BASE . $path);
+        $existing_files = array_diff(scandir(DIR_BASE . $path), ['.', '..']);
+        $existing_images_on_disk = [];
+        foreach ($existing_files as $image) {
+            /** @var string $image */
+            $existing_images_on_disk[] = $path . $image;
+        }
+
+        // Find difference
+        $diff_non_file_db = array_diff($existing_images_in_db, $existing_images_on_disk);
+        $diff_new_files = array_diff($existing_images_on_disk, $existing_images_in_db);
+
+        // Add new files
+        foreach ($diff_new_files as $file_path) {
+            $image = new Image;
+            $image->setItemType('gallery');
+            $image->setItemId($gallery->getId());
+            $image->setImage($file_path);
+            $image->setOrder(SQL::getNextOrder(ModuleImages::$tables['images'], 'order', 'item_type', 'gallery'));
+            $image->save();
+        }
+
+        // Delete entries where no more files
+        foreach ($diff_non_file_db as $id => $file_path) {
+            $image = new Image($id);
+            $image->deleteObject();
+        }
+        $image_collection->clearCollectionCache(); // Clear cache, because we may have deleted as few images
+
+        echo  CmsForm::getInstance()
+                ->addField('', CmsHtml::getInstance('images')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
+            . '<br>' ;
+
+        echo AdminGallery::getInstance($image_collection->getAsArrayOfObjectData())
+            ->linkActive('_images_active')
+            ->linkMove('_images_move')
+            ->linkDelete('_images_delete')
+            ->enableResizeProcessor()
+            ->imageWidth(270)
+            ->imageHeight(200)
+        ;
     }
+
+    public function _images_delete() {
+        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
+        $id = $_GET['id'];
+
+        // Delete file
+        $image = new Image($id);
+        if (file_exists(DIR_BASE . $image->getImage())) unlink(DIR_BASE . $image->getImage());
+
+        // Delete object from DB
+        $image->deleteObject();
+
+        // Show message to user
+        Messages::getInstance()->setFlash('Image removed');
+
+        back();
+    }
+
+    public function _images_move() {
+        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
+        $id = $_GET['id'];
+
+        $image = new Image($id);
+        $product_id = $image->getItemId();
+
+        SQL::orderCat($id, ModuleImages::$tables['images'], $product_id, 'item_id', $_GET['direct']);
+
+        // Show message to user
+        Messages::getInstance()->setFlash('Images reordered');
+
+        back();
+    }
+
 
     public static function _add()
     {
         if (!$_POST) return;
 
-        $_POST['password'] = ModuleClients::generateHash($_POST['password']);
+        $_POST['password'] = ModuleGallery::generateHash($_POST['password']);
 
         $client = new Client();
         $client->loadDataFromArray($_POST);
@@ -99,52 +220,58 @@ class CmsGallery
         go('?p=' . P . '&highlight=' . $client->getId());
     }
 
-    public static function _edit()
+    public static function _gallery_add()
+    {
+        if (!$_POST) return;
+
+        $gallery = new Gallery();
+        $gallery->loadDataFromArray($_POST);
+        $gallery->save();
+
+        go('?p=' . P . '&highlight=' . $gallery->getId());
+    }
+
+    public static function _gallery_edit()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        if ($_POST['password']) {
-            $_POST['password'] = ModuleClients::generateHash($_POST['password']);
-        } else {
-            unset($_POST['password']);
-        }
 
-        $client = new Client($id);
+        $client = new Gallery($id);
         $client->loadDataFromArray($_POST);
         $client->save();
 
         go('?p=' . P . '&highlight=' . $id);
     }
 
-    public static function _active()
+    public static function _gallery_active()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        $group = new Client($id);
-        $group->flipBoolValue('active');
-        $group->save();
+        $Category = new Gallery($id);
+        $Category->flipBoolValue('active');
+        $Category->save();
 
         go(REF);
     }
 
-    public static function _delete()
+    public static function _gallery_delete()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        $group = new Client($id);
-        $group->deleteObject();
+        $Category = new Gallery($id);
+        $Category->deleteObject();
 
         go(REF);
     }
 
 
 
-    /** Groups */
+    /** categories */
 
-    public static function groups()
+    public static function categories()
     {
         echo CmsTable::getInstance()
             ->addDataSql('
@@ -152,108 +279,109 @@ SELECT
 	`g`.`id`,
 	`d`.`' . LNG . '` AS `title`,
 	`g`.`active`,
-	`g`.`default`,
-(SELECT COUNT(*) FROM `'. ModuleClients::$tables['collections'] .'` AS `l` WHERE `l`.`group_id` = `g`.`id`) AS `collection_count`
-FROM `' . ModuleClients::$tables['groups'] . '` AS `g`
-JOIN `cms_dstrings` AS `d` ON `d`.`id` = `g`.`title`
-ORDER BY `g`.`title`
+(SELECT COUNT(*) FROM `'. ModuleGallery::$tables['galleries'] .'` AS `l` WHERE `l`.`category_id` = `g`.`id`) AS `galleries`
+FROM `' . ModuleGallery::$tables['categories'] . '` AS `g`
+LEFT JOIN `cms_dstrings` AS `d` ON `d`.`id` = `g`.`title`
+ORDER BY `g`.`order`
 		')
             ->addColumn(ColumnData::getInstance('title')->enableOrderableColumn())
-            ->addColumn(ColumnData::getInstance('collection_count')->enableOrderableColumn()->width('1%')->title('Collections')->align('right')->href('?p='. P .'&do=collections&group_id={%id%}'))
-            ->addColumn(ColumnActive::getInstance('default')->href('?p='. P .'&do=_groups_default&id={%id%}'))
-            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=groups_edit&id={%id%}')->width('1%')->value('edit'))
-            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_groups_active&id={%id%}')->enableOrderableColumn())
-            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_groups_delete&id={%id%}'))
+            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=categories_edit&id={%id%}')->width('1%')->value('edit'))
+            ->addColumn(ColumnData::getInstance('galleries')->align('right')->nowrap(true)->width('1%')) // TODO link to galleries with filter
+            ->addColumn(ColumnOrder::getInstance('order')->href('?p=' . P . '&do=_categories_order&id={%id%}')->width('1%')->value('edit'))
+            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_categories_active&id={%id%}')->enableOrderableColumn())
+            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_categories_delete&id={%id%}'))
             ->attachFilterForm(
-                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=groups_add">Add Group</a>')
+                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=categories_add">Add New Category</a>')
                     ->addFilter('Title', Text::getInstance('title')->actAs('like'))
             );
     }
 
-    private static function __groups_add_edit_form()
+    private static function __categories_add_edit_form($data = [])
     {
-        return CmsForm::getInstance()
-            ->addField('Title', CmsInputText::getInstance('title')->multilng(1));
+        return CmsFormHelper::outputForm(ModuleGallery::$tables['categories'], [
+            'dara' => $data,
+            'fields' => [
+                'title' => [
+                    'multilng' => true
+                ]
+            ],
+            'combine' => true,
+            'unset' => ['order', 'active']
+        ]);
     }
 
-    public static function groups_add()
+    public static function categories_add()
     {
-        echo self::__groups_add_edit_form()
-            ->setAction('?p=' . P . '&do=_groups_add')
+        echo self::__categories_add_edit_form()
+            ->setAction('?p=' . P . '&do=_categories_add')
             ->setSubmitButton(new CmsButton('Add'));
     }
 
-    public static function groups_edit()
+    public static function categories_edit()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = &$_GET['id'];
 
-        echo self::__groups_add_edit_form()
-            ->addData(q_assoc_row('SELECT `title` FROM `' . ModuleClients::$tables['groups'] . '` WHERE `id` = "' . $id . '"'))
-            ->setAction('?p=' . P . '&do=_groups_edit&id=' . $id)
+        echo self::__categories_add_edit_form()
+            ->addData(q_assoc_row('SELECT `title` FROM `' . ModuleGallery::$tables['categories'] . '` WHERE `id` = "' . $id . '"'))
+            ->setAction('?p=' . P . '&do=_categories_edit&id=' . $id)
             ->setSubmitButton(new CmsButton('Update'));
     }
 
-    public static function _groups_add()
+    public static function _categories_add()
     {
-        $group = new Group();
-        $group->loadDataFromArray($_POST);
-        $group->save();
+        $category = new GalleryCategory();
+        $category->loadDataFromArray($_POST);
+        $category->setOrder(SQL::getNextOrder(ModuleGallery::$tables['categories']));
+        $category->save();
 
-        go('?p=' . P . '&do=groups&highlight=' . $group->getId());
+        go('?p=' . P . '&do=categories&highlight=' . $category->getId());
     }
 
-    public static function _groups_edit()
+    public static function _categories_edit()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        $group = new Group();
-        $group->loadDataFromDB($id);
-        $group->loadDataFromArray($_POST);
-        $group->save();
+        $Category = new GalleryCategory();
+        $Category->loadDataFromDB($id);
+        $Category->loadDataFromArray($_POST);
+        $Category->save();
 
-        go('?p=' . P . '&do=groups&highlight=' . $id);
+        go('?p=' . P . '&do=categories&highlight=' . $id);
     }
 
-    public static function _groups_default()
+    public static function _categories_order()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        // Set all groups to default = 0
-        $groups_collection = new GroupCollection();
-        $groups_collection->setIsNotDefault();
-        $groups_collection->save();
-
-        $group = new Group($id);
-        $group->setIsDefault();
-        $group->save();
+        SQL::order($id, ModuleGallery::$tables['categories'], $_GET['direct']);
 
         go(REF);
     }
 
-    public static function _groups_delete()
+    public static function _categories_delete()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        $group = new Group();
-        $group->setId($id);
-        $group->deleteObject();
+        $Category = new GalleryCategory();
+        $Category->setId($id);
+        $Category->deleteObject();
 
         go(REF);
     }
 
-    public static function _groups_active()
+    public static function _categories_active()
     {
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
 
-        $group = new Group();
-        $group->setId($id);
-        $group->flipBoolValue('active');
-        $group->save();
+        $Category = new GalleryCategory();
+        $Category->setId($id);
+        $Category->flipBoolValue('active');
+        $Category->save();
 
         go(REF);
     }
@@ -263,15 +391,15 @@ ORDER BY `g`.`title`
     /** Collections */
 
     public static function collections() {
-        if (!isset($_GET['group_id']) || !ctype_digit((string)$_GET['group_id'])) return;
-        $group_id = &$_GET['group_id'];
+        if (!isset($_GET['category_id']) || !ctype_digit((string)$_GET['category_id'])) return;
+        $category_id = &$_GET['category_id'];
 
-        $group = new Group($group_id);
-        $group->loadDataFromDB();
+        $Category = new Category($category_id);
+        $Category->loadDataFromDB();
 
         echo Columns::getInstance()
-                ->add(BreadCrumbs::getInstance()->addCrumb($group->getTitle(), '?p='. P .'&do=groups'))
-                ->add('<a href="?p=' . P . '&do=collection_add&group_id='. $group_id .'">Add Collection</a>', ['align' => 'right'])
+                ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories'))
+                ->add('<a href="?p=' . P . '&do=collection_add&category_id='. $category_id .'">Add Collection</a>', ['align' => 'right'])
             . '<br>';
 
         $sql = 'SELECT
@@ -279,9 +407,9 @@ ORDER BY `g`.`title`
     `l`.`active`,
     `l`.`templates_count`,
 	`d1`.`' . LNG . '` AS `title`
-FROM `' . ModuleClients::$tables['collections'] . '` AS `l`
+FROM `' . ModuleGallery::$tables['collections'] . '` AS `l`
 LEFT JOIN `cms_dstrings` AS `d1` ON `d1`.`id` = `l`.`title`
-WHERE `l`.`group_id` = "'. $group_id .'"
+WHERE `l`.`category_id` = "'. $category_id .'"
 ORDER BY `l`.`title`';
 
         echo CmsTable::getInstance()
@@ -301,19 +429,19 @@ ORDER BY `l`.`title`';
     }
 
     public static function collection_add() {
-        if (!isset($_GET['group_id']) || !ctype_digit((string)$_GET['group_id'])) return;
-        $group_id = &$_GET['group_id'];
+        if (!isset($_GET['category_id']) || !ctype_digit((string)$_GET['category_id'])) return;
+        $category_id = &$_GET['category_id'];
 
-        $group = new Group($group_id);
-        $group->loadDataFromDB();
+        $Category = new Category($category_id);
+        $Category->loadDataFromDB();
 
         echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($group->getTitle(), '?p='. P .'&do=groups'))
+            ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories'))
         ;
 
         echo self::__collections_add_edit_form()
             ->setSubmitButton('Add')
-            ->setAction('?p='. P .'&do=_collection_add&group_id='. $group_id)
+            ->setAction('?p='. P .'&do=_collection_add&category_id='. $category_id)
         ;
     }
 
@@ -324,11 +452,11 @@ ORDER BY `l`.`title`';
         $collection = new Collection($id);
         $collection->loadDataFromDB();
 
-        $group = new Group($collection->getGroupId());
-        $group->loadDataFromDB();
+        $Category = new Category($collection->getCategoryId());
+        $Category->loadDataFromDB();
 
         echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($group->getTitle(), '?p='. P .'&do=groups'))
+            ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories'))
         ;
 
         echo self::__collections_add_edit_form()
@@ -340,19 +468,19 @@ ORDER BY `l`.`title`';
 
     public static function _collection_add()
     {
-        if (!isset($_GET['group_id']) || !ctype_digit((string)$_GET['group_id'])) return;
-        $group_id = &$_GET['group_id'];
+        if (!isset($_GET['category_id']) || !ctype_digit((string)$_GET['category_id'])) return;
+        $category_id = &$_GET['category_id'];
 
-        $group = new Group($group_id);
-        $group->loadDataFromDB();
+        $Category = new Category($category_id);
+        $Category->loadDataFromDB();
 
 
         $collection = new Collection();
         $collection->loadDataFromArray($_POST);
-        $collection->setGroupId($group_id);
+        $collection->setCategoryId($category_id);
         $collection->save();
 
-        go('?p=' . P . '&do=collections&group_id='. $group_id .'&highlight=' . $collection->getId());
+        go('?p=' . P . '&do=collections&category_id='. $category_id .'&highlight=' . $collection->getId());
     }
 
     public static function _collection_edit()
@@ -364,7 +492,7 @@ ORDER BY `l`.`title`';
         $collection->loadDataFromArray($_POST);
         $collection->save();
 
-        go('?p=' . P . '&do=collections&group_id='. $collection->getGroupId() .'&highlight=' . $id);
+        go('?p=' . P . '&do=collections&category_id='. $collection->getCategoryId() .'&highlight=' . $id);
     }
 
     public static function _collection_active()
@@ -372,9 +500,9 @@ ORDER BY `l`.`title`';
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = &$_GET['id'];
 
-        $group = new Collection($id);
-        $group->flipBoolValue('active');
-        $group->save();
+        $Category = new Collection($id);
+        $Category->flipBoolValue('active');
+        $Category->save();
 
         go(REF);
     }
@@ -384,8 +512,8 @@ ORDER BY `l`.`title`';
         if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = &$_GET['id'];
 
-        $group = new Collection($id);
-        $group->deleteObject();
+        $Category = new Collection($id);
+        $Category->deleteObject();
 
         go(REF);
     }
@@ -399,13 +527,13 @@ ORDER BY `l`.`title`';
 
         $collection = new Collection($collection_id);
 
-        $group = new Group($collection->getGroupId());
+        $Category = new Category($collection->getCategoryId());
 
-        $path = ModuleClients::getCollectionTemplatesPath($group->getId(), $collection->getId());
+        $path = ModuleGallery::getCollectionTemplatesPath($Category->getId(), $collection->getId());
 
 
         echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($group->getTitle(), '?p='. P .'&do=groups')->addCrumb($collection->getTitle(), '?p='. P .'&do=collections&group_id='. $group->getId()))
+            ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories')->addCrumb($collection->getTitle(), '?p='. P .'&do=collections&category_id='. $Category->getId()))
         ;
 
         echo  CmsForm::getInstance()
