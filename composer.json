@@ -1,8 +1,8 @@
 {
-  "name": "neTpyceB/TMCms-module-clients",
+  "name": "neTpyceB/TMCms-module-gallery",
   "type": "library",
-  "description": "Module Clients for TMCms",
-  "keywords": ["module", "clients"],
+  "description": "Module Gallery for TMCms",
+  "keywords": ["module", "gallery"],
   "homepage": "http://devp.lv/",
   "license": "proprietary",
   "authors": [

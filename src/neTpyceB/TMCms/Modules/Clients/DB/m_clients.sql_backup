@@ -1,1 +1,0 @@
-CREATE TABLE `m_clients` (  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,  `group_id` int(10) unsigned NOT NULL,  `active` tinyint(3) unsigned NOT NULL DEFAULT '0',  `login` varchar(50) NOT NULL,  `password` char(128) NOT NULL COMMENT 'hash',  PRIMARY KEY (`id`),  KEY `group_id` (`group_id`)) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8

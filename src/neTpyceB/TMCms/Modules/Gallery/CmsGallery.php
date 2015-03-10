@@ -1,5 +1,5 @@
 <?
-namespace neTpyceB\TMCms\Modules\Clients;
+namespace neTpyceB\TMCms\Modules\Gallery;
 
 use neTpyceB\TMCms\Admin\Menu;
 use neTpyceB\TMCms\Files\FileSystem;
@@ -15,7 +15,6 @@ use neTpyceB\TMCms\HTML\Cms\Element\CmsButton;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsHtml;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsInputPassword;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsInputText;
-use neTpyceB\TMCms\HTML\Cms\Element\CmsRow;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsSelect;
 use neTpyceB\TMCms\HTML\Cms\Filter\Select;
 use neTpyceB\TMCms\HTML\Cms\Filter\Text;
@@ -32,7 +31,7 @@ Menu::getInstance()
     ->addSubMenuItem('groups', 'Аккаунты')
 ;
 
-class CmsClients
+class CmsGallery
 {
 
 
