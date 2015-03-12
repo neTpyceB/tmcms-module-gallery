@@ -43,7 +43,7 @@ class ModuleGallery implements IModule {
     public static function getGalleryImages(Gallery $gallery)
     {
         $images_collection = new ImageCollection();
-        $images_collection->setWhereItemId('gallery');
+        $images_collection->setWhereItemType('gallery');
         $images_collection->setWhereItemId($gallery->getId());
 
         return $images_collection->getAsArrayOfObjects();
