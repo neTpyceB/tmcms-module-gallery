@@ -134,7 +134,7 @@ class ModuleGallery implements IModule {
         SQL::orderCat($id, ModuleImages::$tables['images'], $product_id, 'item_id', $direct);
 
         // Show message to user
-        Messages::getInstance()->setFlash('Images reordered');
+        Messages::sendMessage('Images reordered');
     }
 
     public static function deleteImageForCmsModules($id) {
@@ -144,6 +144,6 @@ class ModuleGallery implements IModule {
         $image->deleteObject();
 
         // Show message to user
-        Messages::getInstance()->setFlash('Image removed');
+        Messages::sendMessage('Image removed');
     }
 }

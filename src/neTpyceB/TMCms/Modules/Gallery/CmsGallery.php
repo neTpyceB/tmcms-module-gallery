@@ -182,7 +182,7 @@ ORDER BY `g`.`order`
         $image->deleteObject();
 
         // Show message to user
-        Messages::getInstance()->setFlash('Image removed');
+        Messages::sendMessage('Image removed');
 
         back();
     }
@@ -197,7 +197,7 @@ ORDER BY `g`.`order`
         SQL::orderCat($id, ModuleImages::$tables['images'], $product_id, 'item_id', $_GET['direct']);
 
         // Show message to user
-        Messages::getInstance()->setFlash('Images reordered');
+        Messages::sendMessage('Images reordered');
 
         back();
     }
