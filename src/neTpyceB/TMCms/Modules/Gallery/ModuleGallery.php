@@ -14,6 +14,7 @@ use neTpyceB\TMCms\HTML\Cms\Widget\FileManager;
 use neTpyceB\TMCms\Modules\CommonObject;
 use neTpyceB\TMCms\Modules\Gallery\Object\Gallery;
 use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
+use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCollection;
 use neTpyceB\TMCms\Modules\Images\ModuleImages;
 use neTpyceB\TMCms\Modules\Images\Object\Image;
 use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
@@ -147,5 +148,11 @@ class ModuleGallery implements IModule {
 
         // Show message to user
         Messages::sendMessage('Image removed');
+    }
+
+    public static function getGalleryPairs()
+    {
+        $category_collection = new GalleryCollection();
+        return $category_collection->getPairs('title');
     }
 }
