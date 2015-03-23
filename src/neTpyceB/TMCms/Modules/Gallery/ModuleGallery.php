@@ -45,11 +45,13 @@ class ModuleGallery implements IModule {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
     }
 
-    public static function getGalleryImages(Gallery $gallery)
+    public static function getGalleryImages(Gallery $gallery = NULL)
     {
         $images_collection = new ImageCollection();
         $images_collection->setWhereItemType('gallery');
-        $images_collection->setWhereItemId($gallery->getId());
+        if ($gallery) {
+            $images_collection->setWhereItemId($gallery->getId());
+        }
 
         return $images_collection->getAsArrayOfObjects();
     }
