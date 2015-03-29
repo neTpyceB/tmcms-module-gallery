@@ -60,12 +60,11 @@ class ModuleGallery implements IModule {
     public static function getViewForCmsModules(CommonObject $item) {
         ob_start();
 
-        $full_class = get_class($item);
         $class = strtolower(join('', array_slice(explode('\\', get_class($item)), -1)));
 
         // Get existing images in DB
         $image_collection = new ImageCollection;
-//        $image_collection->setWhereItemType($item::class);
+        $image_collection->setWhereItemType($class);
         $image_collection->setWhereItemId($item->getId());
         $image_collection->setOrderByField('order');
         $images = $image_collection->getAsArrayOfObjectData();
@@ -132,9 +131,8 @@ class ModuleGallery implements IModule {
 
     public static function orderImageForCmsModules($id, $direct) {
         $image = new Image($id);
-        $product_id = $image->getItemId();
 
-        SQL::orderCat($id, ModuleImages::$tables['images'], $product_id, 'item_id', $direct);
+        SQL::orderCat($id, ModuleImages::$tables['images'], $image->getItemId(), 'item_id', $direct);
 
         // Show message to user
         Messages::sendMessage('Images reordered');
