@@ -6,6 +6,7 @@ use neTpyceB\TMCms\Admin\Messages;
 use neTpyceB\TMCms\DB\SQL;
 use neTpyceB\TMCms\Files\FileSystem;
 use neTpyceB\TMCms\HTML\BreadCrumbs;
+use neTpyceB\TMCms\HTML\Cms\CmsFieldset;
 use neTpyceB\TMCms\HTML\Cms\CmsForm;
 use neTpyceB\TMCms\HTML\Cms\CmsFormHelper;
 use neTpyceB\TMCms\HTML\Cms\CmsTable;
@@ -14,7 +15,6 @@ use neTpyceB\TMCms\HTML\Cms\Column\ColumnData;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnDelete;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnEdit;
 use neTpyceB\TMCms\HTML\Cms\Column\ColumnOrder;
-use neTpyceB\TMCms\HTML\Cms\Columns;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsButton;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsHtml;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsInputText;
@@ -44,10 +44,12 @@ class CmsGallery
 
     public static function _default()
     {
-        echo self::__gallery_add_edit_form()
+        $form = self::__gallery_add_edit_form()
             ->setAction('?p='. P .'&do=_gallery_add')
-            ->setSubmitButton(new CmsButton('Create new gallery'))
+            ->setSubmitButton(new CmsButton('Create new Gallery'))
         ;
+
+        echo CmsFieldset::getInstance('Add new Gallery', $form);
 
         echo '<br><br>';
 
@@ -59,8 +61,8 @@ SELECT
 	`d2`.`' . LNG . '` AS `category`
 FROM `' . ModuleGallery::$tables['galleries'] . '` AS `g`
 LEFT JOIN `'. ModuleGallery::$tables['categories'] .'` AS `c` ON `c`.`id` = `g`.`category_id`
-LEFT JOIN `cms_dstrings` AS `d1` ON `d1`.`id` = `g`.`title`
-LEFT JOIN `cms_dstrings` AS `d2` ON `d2`.`id` = `c`.`title`
+LEFT JOIN `cms_translations` AS `d1` ON `d1`.`id` = `g`.`title`
+LEFT JOIN `cms_translations` AS `d2` ON `d2`.`id` = `c`.`title`
 ORDER BY `g`.`order`
         ';
 
@@ -80,13 +82,6 @@ ORDER BY `g`.`order`
             ->addField('Title', CmsInputText::getInstance('title')->enableMultiLng())
             ->addField('Category', CmsSelect::getInstance('category_id')->setOptions(ModuleGallery::getCategoryPairs()))
         ;
-    }
-
-    public static function add()
-    {
-        echo self::__gallery_add_edit_form()
-            ->setAction('?p=' . P . '&do=_add')
-            ->setSubmitButton(new CmsButton('Add'));
     }
 
     public static function gallery_edit()
@@ -202,20 +197,6 @@ ORDER BY `g`.`order`
         back();
     }
 
-
-    public static function _add()
-    {
-        if (!$_POST) return;
-
-        $_POST['password'] = ModuleGallery::generateHash($_POST['password']);
-
-        $client = new Client();
-        $client->loadDataFromArray($_POST);
-        $client->save();
-
-        go('?p=' . P . '&highlight=' . $client->getId());
-    }
-
     public static function _gallery_add()
     {
         if (!$_POST) return;
@@ -277,7 +258,7 @@ SELECT
 	`g`.`active`,
 (SELECT COUNT(*) FROM `'. ModuleGallery::$tables['galleries'] .'` AS `l` WHERE `l`.`category_id` = `g`.`id`) AS `galleries`
 FROM `' . ModuleGallery::$tables['categories'] . '` AS `g`
-LEFT JOIN `cms_dstrings` AS `d` ON `d`.`id` = `g`.`title`
+LEFT JOIN `cms_translations` AS `d` ON `d`.`id` = `g`.`title`
 ORDER BY `g`.`order`
 		')
             ->addColumn(ColumnData::getInstance('title')->enableOrderableColumn())
@@ -380,174 +361,5 @@ ORDER BY `g`.`order`
         $Category->save();
 
         go(REF);
-    }
-
-
-
-    /** Collections */
-
-    public static function collections() {
-        if (!isset($_GET['category_id']) || !ctype_digit((string)$_GET['category_id'])) return;
-        $category_id = &$_GET['category_id'];
-
-        $Category = new Category($category_id);
-        $Category->loadDataFromDB();
-
-        echo Columns::getInstance()
-                ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories'))
-                ->add('<a href="?p=' . P . '&do=collection_add&category_id='. $category_id .'">Add Collection</a>', ['align' => 'right'])
-            . '<br>';
-
-        $sql = 'SELECT
-    `l`.`id`,
-    `l`.`active`,
-    `l`.`templates_count`,
-	`d1`.`' . LNG . '` AS `title`
-FROM `' . ModuleGallery::$tables['collections'] . '` AS `l`
-LEFT JOIN `cms_dstrings` AS `d1` ON `d1`.`id` = `l`.`title`
-WHERE `l`.`category_id` = "'. $category_id .'"
-ORDER BY `l`.`title`';
-
-        echo CmsTable::getInstance()
-            ->addDataSql($sql)
-            ->addColumn(ColumnData::getInstance('title')->enableOrderableColumn())
-            ->addColumn(ColumnData::getInstance('templates_count')->enableOrderableColumn()->width('1%')->title('Templates')->align('right')->href('?p='. P .'&do=templates&collection_id={%id%}'))
-            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=collection_edit&id={%id%}')->width('1%')->value('edit'))
-            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_collection_active&id={%id%}')->enableOrderableColumn())
-            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_collection_delete&id={%id%}'))
-        ;
-    }
-
-    private static function __collections_add_edit_form()
-    {
-        return CmsForm::getInstance()
-            ->addField('Title', CmsInputText::getInstance('title')->multilng(1));
-    }
-
-    public static function collection_add() {
-        if (!isset($_GET['category_id']) || !ctype_digit((string)$_GET['category_id'])) return;
-        $category_id = &$_GET['category_id'];
-
-        $Category = new Category($category_id);
-        $Category->loadDataFromDB();
-
-        echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories'))
-        ;
-
-        echo self::__collections_add_edit_form()
-            ->setSubmitButton('Add')
-            ->setAction('?p='. P .'&do=_collection_add&category_id='. $category_id)
-        ;
-    }
-
-    public static function collection_edit() {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
-
-        $collection = new Collection($id);
-        $collection->loadDataFromDB();
-
-        $Category = new Category($collection->getCategoryId());
-        $Category->loadDataFromDB();
-
-        echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories'))
-        ;
-
-        echo self::__collections_add_edit_form()
-            ->setSubmitButton('Edit')
-            ->setAction('?p='. P .'&do=_collection_edit&id='. $id)
-            ->addData($collection->getAsArray())
-        ;
-    }
-
-    public static function _collection_add()
-    {
-        if (!isset($_GET['category_id']) || !ctype_digit((string)$_GET['category_id'])) return;
-        $category_id = &$_GET['category_id'];
-
-        $Category = new Category($category_id);
-        $Category->loadDataFromDB();
-
-
-        $collection = new Collection();
-        $collection->loadDataFromArray($_POST);
-        $collection->setCategoryId($category_id);
-        $collection->save();
-
-        go('?p=' . P . '&do=collections&category_id='. $category_id .'&highlight=' . $collection->getId());
-    }
-
-    public static function _collection_edit()
-    {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
-
-        $collection = new Collection($id);
-        $collection->loadDataFromArray($_POST);
-        $collection->save();
-
-        go('?p=' . P . '&do=collections&category_id='. $collection->getCategoryId() .'&highlight=' . $id);
-    }
-
-    public static function _collection_active()
-    {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
-
-        $Category = new Collection($id);
-        $Category->flipBoolValue('active');
-        $Category->save();
-
-        go(REF);
-    }
-
-    public static function _collection_delete()
-    {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
-
-        $Category = new Collection($id);
-        $Category->deleteObject();
-
-        go(REF);
-    }
-
-
-    /** Templates */
-
-    public static function templates() {
-        if (!isset($_GET['collection_id']) || !ctype_digit((string)$_GET['collection_id'])) return;
-        $collection_id = &$_GET['collection_id'];
-
-        $collection = new Collection($collection_id);
-
-        $Category = new Category($collection->getCategoryId());
-
-        $path = ModuleGallery::getCollectionTemplatesPath($Category->getId(), $collection->getId());
-
-
-        echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($Category->getTitle(), '?p='. P .'&do=categories')->addCrumb($collection->getTitle(), '?p='. P .'&do=collections&category_id='. $Category->getId()))
-        ;
-
-        echo  CmsForm::getInstance()
-            ->addField('', CmsHtml::getInstance('templates')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
-        . '<br>' ;
-
-        FileSystem::mkDir(DIR_BASE . $path);
-
-        $files = array_diff(scandir(DIR_BASE . $path), ['.', '..']);
-        // Set count in DB
-        $collection->loadDataFromDB()->setField('templates_count', count($files))->save();
-
-        // Echo list
-        $form = CmsForm::getInstance();
-        foreach ($files as $v) {
-            $form->addField('', CmsHtml::getInstance($v)->value($v));
-        }
-
-        echo $form;
     }
 }
