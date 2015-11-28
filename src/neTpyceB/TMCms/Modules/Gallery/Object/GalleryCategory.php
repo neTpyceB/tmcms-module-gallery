@@ -1,6 +1,6 @@
 <?php
 namespace neTpyceB\TMCms\Modules\Gallery\Object;
-use neTpyceB\TMCms\Modules\CommonObject;
+use neTpyceB\TMCms\Orm\Entity;
 
 /**
  * Class GalleryCategory
@@ -14,7 +14,7 @@ use neTpyceB\TMCms\Modules\CommonObject;
  * @method setActive(bool)
  * @method setOrder(int)
  */
-class GalleryCategory extends CommonObject {
+class GalleryCategory extends Entity {
     protected $db_table = 'm_gallery_categories';
-    protected $multi_lng_fields = ['title'];
+    protected $translation_fields = ['title'];
 }
