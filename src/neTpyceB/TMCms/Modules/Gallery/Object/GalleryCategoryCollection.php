@@ -1,8 +1,8 @@
 <?php
 namespace neTpyceB\TMCms\Modules\Gallery\Object;
 
-use neTpyceB\TMCms\Modules\CommonObjectCollection;
+use neTpyceB\TMCms\Orm\EntityRepository;
 
-class GalleryCategoryCollection extends CommonObjectCollection {
+class GalleryCategoryCollection extends EntityRepository {
     protected $db_table = 'm_gallery_categories';
 }
