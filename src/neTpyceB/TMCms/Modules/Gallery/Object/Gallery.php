@@ -1,7 +1,7 @@
 <?php
 namespace neTpyceB\TMCms\Modules\Gallery\Object;
 use neTpyceB\TMCms\Files\FileSystem;
-use neTpyceB\TMCms\Modules\CommonObject;
+use neTpyceB\TMCms\Orm\Entity;
 use neTpyceB\TMCms\Modules\Gallery\ModuleGallery;
 use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
 
@@ -20,9 +20,9 @@ use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
  * @method setOrder(int)
  * @method setCategoryId(int)
  */
-class Gallery extends CommonObject {
+class Gallery extends Entity {
     protected $db_table = 'm_gallery';
-    protected $multi_lng_fields = ['title'];
+    protected $translation_fields = ['title'];
 
     // Before delete object
     public function deleteObject() {
