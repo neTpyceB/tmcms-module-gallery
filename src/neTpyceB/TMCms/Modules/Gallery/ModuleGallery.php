@@ -11,7 +11,6 @@ use neTpyceB\TMCms\HTML\Cms\Columns;
 use neTpyceB\TMCms\HTML\Cms\CmsGallery as GalleryHtml;
 use neTpyceB\TMCms\HTML\Cms\Element\CmsHtml;
 use neTpyceB\TMCms\HTML\Cms\Widget\FileManager;
-use neTpyceB\TMCms\Modules\CommonObject;
 use neTpyceB\TMCms\Modules\Gallery\Object\Gallery;
 use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
 use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCollection;
@@ -19,6 +18,7 @@ use neTpyceB\TMCms\Modules\Images\ModuleImages;
 use neTpyceB\TMCms\Modules\Images\Object\Image;
 use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
 use neTpyceB\TMCms\Modules\IModule;
+use neTpyceB\TMCms\Orm\Entity;
 
 defined('INC') or exit;
 
@@ -57,7 +57,7 @@ class ModuleGallery implements IModule {
         return $images_collection->getAsArrayOfObjects();
     }
 
-    public static function getViewForCmsModules(CommonObject $item) {
+    public static function getViewForCmsModules(Entity $item) {
         ob_start();
 
         $class = strtolower(join('', array_slice(explode('\\', get_class($item)), -1)));
@@ -66,7 +66,7 @@ class ModuleGallery implements IModule {
         $image_collection = new ImageCollection;
         $image_collection->setWhereItemType($class);
         $image_collection->setWhereItemId($item->getId());
-        $image_collection->setOrderByField('order');
+        $image_collection->addOrderByField();
         $images = $image_collection->getAsArrayOfObjectData();
 
         // Get images on disk
