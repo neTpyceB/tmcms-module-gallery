@@ -117,7 +117,7 @@ class ModuleGallery implements IModule {
                 ->addField('', CmsHtml::getInstance('images')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
             . '<br>' ;
 
-        echo GalleryHtml::getInstance($image_collection->getAsArrayOfObjectData())
+        echo GalleryHtml::getInstance($image_collection->getAsArrayOfObjectData(true))
             ->linkActive('_images_active')
             ->linkMove('_images_move')
             ->linkDelete('_images_delete')
