@@ -1,24 +1,24 @@
 <?php
-namespace neTpyceB\TMCms\Modules\Gallery;
+namespace TMCms\AdminTMCms\Modules\Gallery;
 
-use neTpyceB\TMCms\Admin\Messages;
-use neTpyceB\TMCms\Admin\Users;
-use neTpyceB\TMCms\DB\SQL;
-use neTpyceB\TMCms\Files\FileSystem;
-use neTpyceB\TMCms\HTML\BreadCrumbs;
-use neTpyceB\TMCms\HTML\Cms\CmsForm;
-use neTpyceB\TMCms\HTML\Cms\Columns;
-use neTpyceB\TMCms\HTML\Cms\CmsGallery as GalleryHtml;
-use neTpyceB\TMCms\HTML\Cms\Element\CmsHtml;
-use neTpyceB\TMCms\HTML\Cms\Widget\FileManager;
-use neTpyceB\TMCms\Modules\Gallery\Object\Gallery;
-use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
-use neTpyceB\TMCms\Modules\Gallery\Object\GalleryCollection;
-use neTpyceB\TMCms\Modules\Images\ModuleImages;
-use neTpyceB\TMCms\Modules\Images\Object\Image;
-use neTpyceB\TMCms\Modules\Images\Object\ImageCollection;
-use neTpyceB\TMCms\Modules\IModule;
-use neTpyceB\TMCms\Orm\Entity;
+use TMCms\AdminTMCms\Admin\Messages;
+use TMCms\AdminTMCms\Admin\Users;
+use TMCms\AdminTMCms\DB\SQL;
+use TMCms\AdminTMCms\Files\FileSystem;
+use TMCms\AdminTMCms\HTML\BreadCrumbs;
+use TMCms\AdminTMCms\HTML\Cms\CmsForm;
+use TMCms\AdminTMCms\HTML\Cms\Columns;
+use TMCms\AdminTMCms\HTML\Cms\CmsGallery as GalleryHtml;
+use TMCms\AdminTMCms\HTML\Cms\Element\CmsHtml;
+use TMCms\AdminTMCms\HTML\Cms\Widget\FileManager;
+use TMCms\AdminTMCms\Modules\Gallery\Object\Gallery;
+use TMCms\AdminTMCms\Modules\Gallery\Object\GalleryCategoryCollection;
+use TMCms\AdminTMCms\Modules\Gallery\Object\GalleryCollection;
+use TMCms\AdminTMCms\Modules\Images\ModuleImages;
+use TMCms\AdminTMCms\Modules\Images\Object\Image;
+use TMCms\AdminTMCms\Modules\Images\Object\ImageCollection;
+use TMCms\AdminTMCms\Modules\IModule;
+use TMCms\AdminTMCms\Orm\Entity;
 
 defined('INC') or exit;
 

@@ -14,8 +14,8 @@
     }
   ],
   "autoload": {
-    "psr-0": {
-      "neTpyceB\\TMCms": "src"
+    "psr-4": {
+      "TMCms\\Modules\\Gellery": "src"
     }
   },
   "repositories": [
