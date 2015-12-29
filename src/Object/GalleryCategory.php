@@ -1,10 +1,10 @@
 <?php
-namespace TMCms\AdminTMCms\Modules\Gallery\Object;
-use TMCms\AdminTMCms\Orm\Entity;
+namespace TMCms\Modules\Gallery\Object;
+use TMCms\Orm\Entity;
 
 /**
  * Class GalleryCategory
- * @package TMCms\AdminTMCms\Modules\Gallery\Object
+ * @package TMCms\Modules\Gallery\Object
  *
  * @method string getTitle()
  * @method bool getActive()

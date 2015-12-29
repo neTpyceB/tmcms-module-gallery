@@ -1,7 +1,7 @@
 <?php
-namespace TMCms\AdminTMCms\Modules\Gallery\Object;
+namespace TMCms\Modules\Gallery\Object;
 
-use TMCms\AdminTMCms\Orm\EntityRepository;
+use TMCms\Orm\EntityRepository;
 
 class GalleryCollection extends EntityRepository {
     protected $db_table = 'm_gallery';

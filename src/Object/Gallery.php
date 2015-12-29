@@ -1,14 +1,14 @@
 <?php
-namespace TMCms\AdminTMCms\Modules\Gallery\Object;
-use TMCms\AdminTMCms\Files\FileSystem;
-use TMCms\AdminTMCms\Orm\Entity;
-use TMCms\AdminTMCms\Modules\Gallery\ModuleGallery;
-use TMCms\AdminTMCms\Modules\Images\Object\ImageCollection;
+namespace TMCms\Modules\Gallery\Object;
+use TMCms\Files\FileSystem;
+use TMCms\Orm\Entity;
+use TMCms\Modules\Gallery\ModuleGallery;
+use TMCms\Modules\Images\Object\ImageCollection;
 
 
 /**
  * Class Gallery
- * @package TMCms\AdminTMCms\Modules\Gallery\Object
+ * @package TMCms\Modules\Gallery\Object
  *
  * @method string getTitle()
  * @method bool getActive()

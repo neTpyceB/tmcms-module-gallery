@@ -1,24 +1,24 @@
 <?php
-namespace TMCms\AdminTMCms\Modules\Gallery;
+namespace TMCms\Modules\Gallery;
 
-use TMCms\AdminTMCms\Admin\Messages;
-use TMCms\AdminTMCms\Admin\Users;
-use TMCms\AdminTMCms\DB\SQL;
-use TMCms\AdminTMCms\Files\FileSystem;
-use TMCms\AdminTMCms\HTML\BreadCrumbs;
-use TMCms\AdminTMCms\HTML\Cms\CmsForm;
-use TMCms\AdminTMCms\HTML\Cms\Columns;
-use TMCms\AdminTMCms\HTML\Cms\CmsGallery as GalleryHtml;
-use TMCms\AdminTMCms\HTML\Cms\Element\CmsHtml;
-use TMCms\AdminTMCms\HTML\Cms\Widget\FileManager;
-use TMCms\AdminTMCms\Modules\Gallery\Object\Gallery;
-use TMCms\AdminTMCms\Modules\Gallery\Object\GalleryCategoryCollection;
-use TMCms\AdminTMCms\Modules\Gallery\Object\GalleryCollection;
-use TMCms\AdminTMCms\Modules\Images\ModuleImages;
-use TMCms\AdminTMCms\Modules\Images\Object\Image;
-use TMCms\AdminTMCms\Modules\Images\Object\ImageCollection;
-use TMCms\AdminTMCms\Modules\IModule;
-use TMCms\AdminTMCms\Orm\Entity;
+use TMCms\Admin\Messages;
+use TMCms\Admin\Users;
+use TMCms\DB\SQL;
+use TMCms\Files\FileSystem;
+use TMCms\HTML\BreadCrumbs;
+use TMCms\HTML\Cms\CmsForm;
+use TMCms\HTML\Cms\Columns;
+use TMCms\HTML\Cms\CmsGallery as GalleryHtml;
+use TMCms\HTML\Cms\Element\CmsHtml;
+use TMCms\HTML\Cms\Widget\FileManager;
+use TMCms\Modules\Gallery\Object\Gallery;
+use TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
+use TMCms\Modules\Gallery\Object\GalleryCollection;
+use TMCms\Modules\Images\ModuleImages;
+use TMCms\Modules\Images\Object\Image;
+use TMCms\Modules\Images\Object\ImageCollection;
+use TMCms\Modules\IModule;
+use TMCms\Orm\Entity;
 
 defined('INC') or exit;
 
