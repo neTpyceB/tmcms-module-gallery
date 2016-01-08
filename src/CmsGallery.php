@@ -25,8 +25,8 @@ use TMCms\HTML\Cms\Widget\FileManager;
 use TMCms\Modules\Gallery\Object\Gallery;
 use TMCms\Modules\Gallery\Object\GalleryCategory;
 use TMCms\Modules\Images\ModuleImages;
-use TMCms\Modules\Images\Object\Image;
-use TMCms\Modules\Images\Object\ImageCollection;
+use TMCms\Modules\Images\Entity\Image;
+use TMCms\Modules\Images\Entity\ImageRepository;
 use TMCms\HTML\Cms\CmsGallery as AdminGallery;
 
 
@@ -105,7 +105,7 @@ ORDER BY `g`.`order`
         // Images
 
         // Get existing images in DB
-        $image_collection = new ImageCollection;
+        $image_collection = new ImageRepository;
         $image_collection->setWhereItemType('gallery');
         $image_collection->setWhereItemId($gallery->getId());
         $image_collection->setOrderByField('order');

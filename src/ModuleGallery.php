@@ -15,8 +15,8 @@ use TMCms\Modules\Gallery\Object\Gallery;
 use TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
 use TMCms\Modules\Gallery\Object\GalleryCollection;
 use TMCms\Modules\Images\ModuleImages;
-use TMCms\Modules\Images\Object\Image;
-use TMCms\Modules\Images\Object\ImageCollection;
+use TMCms\Modules\Images\Entity\Image;
+use TMCms\Modules\Images\Entity\ImageRepository;
 use TMCms\Modules\IModule;
 use TMCms\Orm\Entity;
 
@@ -48,7 +48,7 @@ class ModuleGallery implements IModule {
 
     public static function getGalleryImages(Gallery $gallery = NULL)
     {
-        $images_collection = new ImageCollection();
+        $images_collection = new ImageRepository();
         $images_collection->setWhereItemType('gallery');
         if ($gallery) {
             $images_collection->setWhereItemId($gallery->getId());
@@ -63,7 +63,7 @@ class ModuleGallery implements IModule {
         $class = strtolower(join('', array_slice(explode('\\', get_class($item)), -1)));
 
         // Get existing images in DB
-        $image_collection = new ImageCollection;
+        $image_collection = new ImageRepository;
         $image_collection->setWhereItemType($class);
         $image_collection->setWhereItemId($item->getId());
         $image_collection->addOrderByField();

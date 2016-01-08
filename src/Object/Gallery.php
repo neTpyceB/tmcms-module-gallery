@@ -3,7 +3,7 @@ namespace TMCms\Modules\Gallery\Object;
 use TMCms\Files\FileSystem;
 use TMCms\Orm\Entity;
 use TMCms\Modules\Gallery\ModuleGallery;
-use TMCms\Modules\Images\Object\ImageCollection;
+use TMCms\Modules\Images\Entity\ImageRepository;
 
 
 /**
@@ -27,7 +27,7 @@ class Gallery extends Entity {
     // Before delete object
     public function deleteObject() {
         // Delete Collection images from DB
-        $images_collection = new ImageCollection();
+        $images_collection = new ImageRepository();
         $images_collection->setWhereItemType('gallery');
         $images_collection->setWhereItemId($this->getId());
         $images_collection->deleteObjectCollection();
