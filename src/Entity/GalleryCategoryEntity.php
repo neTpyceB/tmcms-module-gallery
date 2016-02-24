@@ -1,10 +1,12 @@
 <?php
-namespace TMCms\Modules\Gallery\Object;
+
+namespace TMCms\Modules\Gallery\Entity;
+
 use TMCms\Orm\Entity;
 
 /**
- * Class GalleryCategory
- * @package TMCms\Modules\Gallery\Object
+ * Class GalleryCategoryEntity
+ * @package TMCms\Modules\Gallery\Entity
  *
  * @method string getTitle()
  * @method bool getActive()
@@ -12,9 +14,9 @@ use TMCms\Orm\Entity;
  *
  * @method setTitle(array)
  * @method setActive(bool)
- * @method setOrder(int)
+ * @method $this setOrder(int $order)
  */
-class GalleryCategory extends Entity {
+class GalleryCategoryEntity extends Entity {
     protected $db_table = 'm_gallery_categories';
     protected $translation_fields = ['title'];
 }

@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace TMCms\Modules\Gallery;
 
 use TMCms\Admin\Menu;
@@ -22,13 +23,14 @@ use TMCms\HTML\Cms\Element\CmsSelect;
 use TMCms\HTML\Cms\Filter\Text;
 use TMCms\HTML\Cms\FilterForm;
 use TMCms\HTML\Cms\Widget\FileManager;
-use TMCms\Modules\Gallery\Object\Gallery;
-use TMCms\Modules\Gallery\Object\GalleryCategory;
+use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
+use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
+use TMCms\Modules\Gallery\Entity\GalleryEntity;
+use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
 use TMCms\Modules\Images\ModuleImages;
-use TMCms\Modules\Images\Entity\Image;
-use TMCms\Modules\Images\Entity\ImageRepository;
+use TMCms\Modules\Images\Entity\ImageEntity;
+use TMCms\Modules\Images\Entity\ImageEntityRepository;
 use TMCms\HTML\Cms\CmsGallery as AdminGallery;
-
 
 defined('INC') or exit;
 
@@ -38,58 +40,70 @@ Menu::getInstance()
 
 class CmsGallery
 {
-
-
     /** gallery */
 
     public static function _default()
     {
         $form = self::__gallery_add_edit_form()
             ->setAction('?p='. P .'&do=_gallery_add')
-            ->setSubmitButton(new CmsButton('Create new Gallery'))
+            ->setSubmitButton(new CmsButton(__('Add')))
         ;
 
-        echo CmsFieldset::getInstance('Add new Gallery', $form);
+        $galleries = new GalleryEntityRepository();
+        $galleries->addOrderByField('title');
+
+        $categories = new GalleryCategoryEntityRepository();
+
+        echo CmsFieldset::getInstance('Add Gallery', $form);
 
         echo '<br><br>';
 
-        $sql = '
-SELECT
-    `g`.`id`,
-    `g`.`active`,
-	`d1`.`' . LNG . '` AS `title`,
-	`d2`.`' . LNG . '` AS `category`
-FROM `' . ModuleGallery::$tables['galleries'] . '` AS `g`
-LEFT JOIN `'. ModuleGallery::$tables['categories'] .'` AS `c` ON `c`.`id` = `g`.`category_id`
-LEFT JOIN `cms_translations` AS `d1` ON `d1`.`id` = `g`.`title`
-LEFT JOIN `cms_translations` AS `d2` ON `d2`.`id` = `c`.`title`
-ORDER BY `g`.`order`
-        ';
-
         echo CmsTable::getInstance()
-            ->addDataSql($sql)
-            ->addColumn(ColumnData::getInstance('title')->enableOrderableColumn())
-            ->addColumn(ColumnData::getInstance('category')->enableOrderableColumn()->width('1%')->nowrap(true))
-            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=gallery_edit&id={%id%}')->width('1%')->value('edit'))
-            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_gallery_active&id={%id%}')->enableOrderableColumn())
-            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_gallery_delete&id={%id%}'))
+            ->addData($galleries)
+            ->addColumn(ColumnData::getInstance('title')
+                ->enableOrderableColumn()
+                ->enableTranslationColumn()
+            )
+
+            ->addColumn(ColumnData::getInstance('category_id')
+                ->enableOrderableColumn()
+                ->enableTranslationColumn()
+                ->enableNarrowWidth()
+                ->disableNewlines()
+                ->setPairedDataOptionsForKeys($categories->getPairs('title'))
+            )
+            ->addColumn(ColumnEdit::getInstance('edit')
+                ->setHref('?p=' . P . '&do=gallery_edit&id={%id%}')
+                ->enableNarrowWidth()
+                ->setValue('edit')
+            )
+            ->addColumn(ColumnActive::getInstance('active')
+                ->setHref('?p=' . P . '&do=_gallery_active&id={%id%}')
+                ->enableOrderableColumn()
+            )
+            ->addColumn(ColumnDelete::getInstance()
+                ->setHref('?p=' . P . '&do=_gallery_delete&id={%id%}')
+            )
         ;
     }
 
     private static function __gallery_add_edit_form()
     {
         return CmsForm::getInstance()
-            ->addField('Title', CmsInputText::getInstance('title')->enableMultiLng())
-            ->addField('Category', CmsSelect::getInstance('category_id')->setOptions(ModuleGallery::getCategoryPairs()))
-        ;
+            ->addField('Title', CmsInputText::getInstance('title')
+                ->enableTranslationField()
+            )
+            ->addField('Category', CmsSelect::getInstance('category_id')
+                ->setOptions(ModuleGallery::getCategoryPairs())
+            )
+            ;
     }
 
     public static function gallery_edit()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-        $gallery = new Gallery($id);
+        $gallery = new GalleryEntity($id);
 
         echo BreadCrumbs::getInstance()
             ->addCrumb($gallery->getTitle(), '?p='. P .'&highlight='. $gallery->getId())
@@ -97,35 +111,29 @@ ORDER BY `g`.`order`
         ;
 
         echo self::__gallery_add_edit_form()
-            ->addData(q_assoc_row('SELECT * FROM `' . ModuleGallery::$tables['galleries'] . '` WHERE `id` = "' . $id . '"'))
+            ->addData($gallery)
             ->setAction('?p=' . P . '&do=_gallery_edit&id=' . $id)
-            ->setSubmitButton(new CmsButton('Update'));
+            ->setSubmitButton(new CmsButton(__('Update')));
 
 
         // Images
 
         // Get existing images in DB
-        $image_collection = new ImageRepository;
+        $image_collection = new ImageEntityRepository;
         $image_collection->setWhereItemType('gallery');
         $image_collection->setWhereItemId($gallery->getId());
-        $image_collection->setOrderByField('order');
-        $images = $image_collection->getAsArrayOfObjectData();
+        $image_collection->addOrderByField();
+
+        $existing_images_in_db = $image_collection->getPairs('image');
 
         // Get images on disk
         $path = ModuleImages::getPathForItemImages('gallery', $gallery->getId());
 
-        // Files in DB
-        $existing_images_in_db = [];
-        foreach ($images as $image) {
-            /** @var Image $image */
-            $existing_images_in_db[$image['id']] = $image['image'];
-        }
-
         // Files on disk
         FileSystem::mkDir(DIR_BASE . $path);
-        $existing_files = array_diff(scandir(DIR_BASE . $path), ['.', '..']);
+
         $existing_images_on_disk = [];
-        foreach ($existing_files as $image) {
+        foreach (array_diff(scandir(DIR_BASE . $path), ['.', '..']) as $image) {
             /** @var string $image */
             $existing_images_on_disk[] = $path . $image;
         }
@@ -136,26 +144,32 @@ ORDER BY `g`.`order`
 
         // Add new files
         foreach ($diff_new_files as $file_path) {
-            $image = new Image;
+            $image = new ImageEntity;
             $image->setItemType('gallery');
             $image->setItemId($gallery->getId());
             $image->setImage($file_path);
-            $image->setOrder(SQL::getNextOrder(ModuleImages::$tables['images'], 'order', 'item_type', 'gallery'));
+            $image->setOrder(SQL::getNextOrder($image->getDbTableName(), 'order', 'item_type', 'gallery'));
             $image->save();
         }
 
         // Delete entries where no more files
         foreach ($diff_non_file_db as $id => $file_path) {
-            $image = new Image($id);
+            $image = new ImageEntity($id);
             $image->deleteObject();
         }
+
         $image_collection->clearCollectionCache(); // Clear cache, because we may have deleted as few images
 
         echo  CmsForm::getInstance()
-                ->addField('', CmsHtml::getInstance('images')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
+                ->addField('', CmsHtml::getInstance('images')
+                    ->setWidget(FileManager::getInstance()
+                        ->enablePageReloadOnClose()
+                        ->path($path)
+                    )
+                )
             . '<br>' ;
 
-        echo AdminGallery::getInstance($image_collection->getAsArrayOfObjectData())
+        echo AdminGallery::getInstance($image_collection->getAsArrayOfObjectData(true))
             ->linkActive('_images_active')
             ->linkMove('_images_move')
             ->linkDelete('_images_delete')
@@ -166,42 +180,40 @@ ORDER BY `g`.`order`
     }
 
     public function _images_delete() {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = $_GET['id'];
 
         // Delete file
-        $image = new Image($id);
-        if (file_exists(DIR_BASE . $image->getImage())) unlink(DIR_BASE . $image->getImage());
+        $image = new ImageEntity($id);
+        if (file_exists(DIR_BASE . $image->getImage())) {
+            unlink(DIR_BASE . $image->getImage());
+        }
 
         // Delete object from DB
         $image->deleteObject();
 
         // Show message to user
-        Messages::sendMessage('Image removed');
+        Messages::sendGreenAlert('Image removed');
 
         back();
     }
 
     public function _images_move() {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = $_GET['id'];
 
-        $image = new Image($id);
+        $image = new ImageEntity($id);
         $product_id = $image->getItemId();
 
-        SQL::orderCat($id, ModuleImages::$tables['images'], $product_id, 'item_id', $_GET['direct']);
+        SQL::orderCat($id, $image->getDbTableName(), $product_id, 'item_id', $_GET['direct']);
 
         // Show message to user
-        Messages::sendMessage('Images reordered');
+        Messages::sendGreenAlert('Images reordered');
 
         back();
     }
 
     public static function _gallery_add()
     {
-        if (!$_POST) return;
-
-        $gallery = new Gallery();
+        $gallery = new GalleryEntity();
         $gallery->loadDataFromArray($_POST);
         $gallery->save();
 
@@ -210,11 +222,9 @@ ORDER BY `g`.`order`
 
     public static function _gallery_edit()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-
-        $client = new Gallery($id);
+        $client = new GalleryEntity($id);
         $client->loadDataFromArray($_POST);
         $client->save();
 
@@ -223,10 +233,9 @@ ORDER BY `g`.`order`
 
     public static function _gallery_active()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-        $Category = new Gallery($id);
+        $Category = new GalleryEntity($id);
         $Category->flipBoolValue('active');
         $Category->save();
 
@@ -235,10 +244,9 @@ ORDER BY `g`.`order`
 
     public static function _gallery_delete()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-        $Category = new Gallery($id);
+        $Category = new GalleryEntity($id);
         $Category->deleteObject();
 
         go(REF);
@@ -250,26 +258,46 @@ ORDER BY `g`.`order`
 
     public static function categories()
     {
+        $categories = new GalleryCategoryEntityRepository();
+        $categories->addSimpleSelectFields(['id', 'title', 'active']);
+        $categories->addOrderByField();
+
+        $galleries = new GalleryEntityRepository();
+        $categories->addSimpleSelectFieldsAsString('(SELECT COUNT(*) FROM `'. $galleries->getDbTableName() .'` AS `l` WHERE `l`.`category_id` = `'. $categories->getDbTableName() .'`.`id`) AS `galleries`');
+
         echo CmsTable::getInstance()
-            ->addDataSql('
-SELECT
-	`g`.`id`,
-	`d`.`' . LNG . '` AS `title`,
-	`g`.`active`,
-(SELECT COUNT(*) FROM `'. ModuleGallery::$tables['galleries'] .'` AS `l` WHERE `l`.`category_id` = `g`.`id`) AS `galleries`
-FROM `' . ModuleGallery::$tables['categories'] . '` AS `g`
-LEFT JOIN `cms_translations` AS `d` ON `d`.`id` = `g`.`title`
-ORDER BY `g`.`order`
-		')
-            ->addColumn(ColumnData::getInstance('title')->enableOrderableColumn())
-            ->addColumn(ColumnEdit::getInstance('edit')->href('?p=' . P . '&do=categories_edit&id={%id%}')->width('1%')->value('edit'))
-            ->addColumn(ColumnData::getInstance('galleries')->align('right')->nowrap(true)->width('1%')) // TODO link to galleries with filter
-            ->addColumn(ColumnOrder::getInstance('order')->href('?p=' . P . '&do=_categories_order&id={%id%}')->width('1%')->value('edit'))
-            ->addColumn(ColumnActive::getInstance('active')->href('?p=' . P . '&do=_categories_active&id={%id%}')->enableOrderableColumn())
-            ->addColumn(ColumnDelete::getInstance()->href('?p=' . P . '&do=_categories_delete&id={%id%}'))
+            ->addData($categories)
+            ->addColumn(ColumnData::getInstance('title')
+                ->enableTranslationColumn()
+                ->enableOrderableColumn()
+            )
+            ->addColumn(ColumnEdit::getInstance('edit')
+                ->setHref('?p=' . P . '&do=categories_edit&id={%id%}')
+                ->enableNarrowWidth()
+                ->setValue('edit')
+            )
+            ->addColumn(ColumnData::getInstance('galleries')
+                ->enableRightAlign()
+                ->disableNewlines()
+                ->enableNarrowWidth()
+            )
+            ->addColumn(ColumnOrder::getInstance('order')
+                ->setHref('?p=' . P . '&do=_categories_order&id={%id%}')
+                ->enableNarrowWidth()
+                ->setValue('edit')
+            )
+            ->addColumn(ColumnActive::getInstance('active')
+                ->setHref('?p=' . P . '&do=_categories_active&id={%id%}')
+                ->enableOrderableColumn()
+            )
+            ->addColumn(ColumnDelete::getInstance()
+                ->setHref('?p=' . P . '&do=_categories_delete&id={%id%}')
+            )
             ->attachFilterForm(
-                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=categories_add">Add New Category</a>')
-                    ->addFilter('Title', Text::getInstance('title')->actAs('like'))
+                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=categories_add">'. __('Add Category') .'/a>')
+                    ->addFilter('Title', Text::getInstance('title')
+                        ->enableActAsLike()
+                    )
             );
     }
 
@@ -279,11 +307,14 @@ ORDER BY `g`.`order`
             'dara' => $data,
             'fields' => [
                 'title' => [
-                    'multilng' => true
+                    'translation' => true
                 ]
             ],
             'combine' => true,
-            'unset' => ['order', 'active']
+            'unset' => [
+                'order',
+                'active'
+            ]
         ]);
     }
 
@@ -291,25 +322,28 @@ ORDER BY `g`.`order`
     {
         echo self::__categories_add_edit_form()
             ->setAction('?p=' . P . '&do=_categories_add')
-            ->setSubmitButton(new CmsButton('Add'));
+            ->setSubmitButton(new CmsButton('Add'))
+        ;
     }
 
     public static function categories_edit()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
-        $id = &$_GET['id'];
+        $id = (int)$_GET['id'];
+
+        $category = new GalleryCategoryEntity($id);
 
         echo self::__categories_add_edit_form()
-            ->addData(q_assoc_row('SELECT `title` FROM `' . ModuleGallery::$tables['categories'] . '` WHERE `id` = "' . $id . '"'))
+            ->addData($category)
             ->setAction('?p=' . P . '&do=_categories_edit&id=' . $id)
-            ->setSubmitButton(new CmsButton('Update'));
+            ->setSubmitButton(new CmsButton('Update'))
+        ;
     }
 
     public static function _categories_add()
     {
-        $category = new GalleryCategory();
+        $category = new GalleryCategoryEntity();
         $category->loadDataFromArray($_POST);
-        $category->setOrder(SQL::getNextOrder(ModuleGallery::$tables['categories']));
+        $category->setOrder(SQL::getNextOrder($category->getDbTableName()));
         $category->save();
 
         go('?p=' . P . '&do=categories&highlight=' . $category->getId());
@@ -317,11 +351,9 @@ ORDER BY `g`.`order`
 
     public static function _categories_edit()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-        $Category = new GalleryCategory();
-        $Category->loadDataFromDB($id);
+        $Category = new GalleryCategoryEntity($id);
         $Category->loadDataFromArray($_POST);
         $Category->save();
 
@@ -330,7 +362,6 @@ ORDER BY `g`.`order`
 
     public static function _categories_order()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
         SQL::order($id, ModuleGallery::$tables['categories'], $_GET['direct']);
@@ -340,11 +371,9 @@ ORDER BY `g`.`order`
 
     public static function _categories_delete()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-        $Category = new GalleryCategory();
-        $Category->setId($id);
+        $Category = new GalleryCategoryEntity($id);
         $Category->deleteObject();
 
         go(REF);
@@ -352,11 +381,9 @@ ORDER BY `g`.`order`
 
     public static function _categories_active()
     {
-        if (!isset($_GET['id']) || !ctype_digit((string)$_GET['id'])) return;
         $id = (int)$_GET['id'];
 
-        $Category = new GalleryCategory();
-        $Category->setId($id);
+        $Category = new GalleryCategoryEntity($id);
         $Category->flipBoolValue('active');
         $Category->save();
 

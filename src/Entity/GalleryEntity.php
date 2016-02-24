@@ -1,14 +1,15 @@
 <?php
-namespace TMCms\Modules\Gallery\Object;
+
+namespace TMCms\Modules\Gallery\Entity;
+
 use TMCms\Files\FileSystem;
 use TMCms\Orm\Entity;
 use TMCms\Modules\Gallery\ModuleGallery;
-use TMCms\Modules\Images\Entity\ImageRepository;
-
+use TMCms\Modules\Images\Entity\ImageEntityRepository;
 
 /**
- * Class Gallery
- * @package TMCms\Modules\Gallery\Object
+ * Class GalleryEntity
+ * @package TMCms\Modules\Gallery\Entity
  *
  * @method string getTitle()
  * @method bool getActive()
@@ -20,14 +21,14 @@ use TMCms\Modules\Images\Entity\ImageRepository;
  * @method setOrder(int)
  * @method setCategoryId(int)
  */
-class Gallery extends Entity {
+class GalleryEntity extends Entity {
     protected $db_table = 'm_gallery';
     protected $translation_fields = ['title'];
 
     // Before delete object
     public function deleteObject() {
         // Delete Collection images from DB
-        $images_collection = new ImageRepository();
+        $images_collection = new ImageEntityRepository();
         $images_collection->setWhereItemType('gallery');
         $images_collection->setWhereItemId($this->getId());
         $images_collection->deleteObjectCollection();

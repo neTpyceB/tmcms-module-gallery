@@ -1,4 +1,5 @@
 <?php
+
 namespace TMCms\Modules\Gallery;
 
 use TMCms\Admin\Messages;
@@ -11,25 +12,20 @@ use TMCms\HTML\Cms\Columns;
 use TMCms\HTML\Cms\CmsGallery as GalleryHtml;
 use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Widget\FileManager;
-use TMCms\Modules\Gallery\Object\Gallery;
-use TMCms\Modules\Gallery\Object\GalleryCategoryCollection;
-use TMCms\Modules\Gallery\Object\GalleryCollection;
+use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
+use TMCms\Modules\Gallery\Entity\GalleryEntity;
+use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
 use TMCms\Modules\Images\ModuleImages;
-use TMCms\Modules\Images\Entity\Image;
-use TMCms\Modules\Images\Entity\ImageRepository;
+use TMCms\Modules\Images\Entity\ImageEntity;
+use TMCms\Modules\Images\Entity\ImageEntityRepository;
 use TMCms\Modules\IModule;
 use TMCms\Orm\Entity;
+use TMCms\Traits\singletonInstanceTrait;
 
 defined('INC') or exit;
 
 class ModuleGallery implements IModule {
-	/** @var $this */
-	private static $instance;
-
-	public static function getInstance() {
-		if (!self::$instance) self::$instance = new self;
-		return self::$instance;
-	}
+    use singletonInstanceTrait;
 
 	public static $tables = array(
 		'galleries' => 'm_gallery',
@@ -37,8 +33,10 @@ class ModuleGallery implements IModule {
 	);
 
     public static function getCategoryPairs() {
-        $category_collection = new GalleryCategoryCollection();
-        return $category_collection->getPairs('title');
+        $category_repository = new GalleryCategoryEntityRepository();
+        $category_repository->addOrderByField('title');
+
+        return $category_repository->getPairs('title');
     }
 
     public static function getGalleryImagesPath($id)
@@ -46,15 +44,16 @@ class ModuleGallery implements IModule {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
     }
 
-    public static function getGalleryImages(Gallery $gallery = NULL)
+    public static function getGalleryImages(GalleryEntity $gallery = NULL)
     {
-        $images_collection = new ImageRepository();
-        $images_collection->setWhereItemType('gallery');
+        $image_repository = new ImageEntityRepository();
+        $image_repository->setWhereItemType('gallery');
+
         if ($gallery) {
-            $images_collection->setWhereItemId($gallery->getId());
+            $image_repository->setWhereItemId($gallery->getId());
         }
 
-        return $images_collection->getAsArrayOfObjects();
+        return $image_repository->getAsArrayOfObjects();
     }
 
     public static function getViewForCmsModules(Entity $item) {
@@ -63,7 +62,7 @@ class ModuleGallery implements IModule {
         $class = strtolower(join('', array_slice(explode('\\', get_class($item)), -1)));
 
         // Get existing images in DB
-        $image_collection = new ImageRepository;
+        $image_collection = new ImageEntityRepository;
         $image_collection->setWhereItemType($class);
         $image_collection->setWhereItemId($item->getId());
         $image_collection->addOrderByField();
@@ -75,7 +74,7 @@ class ModuleGallery implements IModule {
         // Files in DB
         $existing_images_in_db = [];
         foreach ($images as $image) {
-            /** @var Image $image */
+            /** @var ImageEntity $image */
             $existing_images_in_db[$image['id']] = $image['image'];
         }
 
@@ -94,7 +93,7 @@ class ModuleGallery implements IModule {
 
         // Add new files
         foreach ($diff_new_files as $file_path) {
-            $image = new Image;
+            $image = new ImageEntity;
             $image->setItemType($class);
             $image->setItemId($item->getId());
             $image->setImage($file_path);
@@ -104,7 +103,7 @@ class ModuleGallery implements IModule {
 
         // Delete entries where no more files
         foreach ($diff_non_file_db as $id => $file_path) {
-            $image = new Image($id);
+            $image = new ImageEntity($id);
             $image->deleteObject();
         }
         $image_collection->clearCollectionCache(); // Clear cache, because we may have deleted as few images
@@ -130,27 +129,29 @@ class ModuleGallery implements IModule {
     }
 
     public static function orderImageForCmsModules($id, $direct) {
-        $image = new Image($id);
+        $image = new ImageEntity($id);
 
-        SQL::orderCat($id, ModuleImages::$tables['images'], $image->getItemId(), 'item_id', $direct);
+        SQL::orderCat($id, $image->getDbTableName(), $image->getItemId(), 'item_id', $direct);
 
         // Show message to user
-        Messages::sendMessage('Images reordered');
+        Messages::sendGreenAlert('Images reordered');
     }
 
     public static function deleteImageForCmsModules($id) {
         // Delete file
-        $image = new Image($id);
+        $image = new ImageEntity($id);
         // Delete object from DB
         $image->deleteObject();
 
         // Show message to user
-        Messages::sendMessage('Image removed');
+        Messages::sendGreenAlert('Image removed');
     }
 
     public static function getGalleryPairs()
     {
-        $category_collection = new GalleryCollection();
-        return $category_collection->getPairs('title');
+        $gallery_repository = new GalleryEntityRepository();
+        $gallery_repository->addOrderByField('title');
+
+        return $gallery_repository->getPairs('title');
     }
 }
