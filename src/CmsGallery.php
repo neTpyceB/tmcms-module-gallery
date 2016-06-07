@@ -18,6 +18,7 @@ use TMCms\HTML\Cms\Column\ColumnEdit;
 use TMCms\HTML\Cms\Column\ColumnOrder;
 use TMCms\HTML\Cms\Element\CmsButton;
 use TMCms\HTML\Cms\Element\CmsHtml;
+use TMCms\HTML\Cms\Element\CmsInputFile;
 use TMCms\HTML\Cms\Element\CmsInputText;
 use TMCms\HTML\Cms\Element\CmsSelect;
 use TMCms\HTML\Cms\Filter\Text;
@@ -90,6 +91,8 @@ class CmsGallery
         return CmsForm::getInstance()
             ->addField('Title', CmsInputText::getInstance('title')
                 ->enableTranslationField()
+            )
+            ->addField('Main image', CmsInputFile::getInstance('image')
             )
             ->addField('Category', CmsSelect::getInstance('category_id')
                 ->setOptions(ModuleGallery::getCategoryPairs())

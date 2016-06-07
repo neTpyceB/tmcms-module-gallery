@@ -154,4 +154,55 @@ class ModuleGallery implements IModule {
 
         return $gallery_repository->getPairs('title');
     }
+    public static function getGalleryView() {
+
+        // Get gallery items
+        $gallery_items = new GalleryEntityRepository();
+        $gallery_items->setWhereActive(1);
+        $gallery_items = $gallery_items->getAsArrayOfObjects();
+
+        // Get gallery categories
+        $gallery_categories = ModuleGallery::getCategoryPairs();
+        $gallery_cat_classes = [];
+
+        // Get gallery images
+        $gallery_images = new ImageEntityRepository();
+        $gallery_images->setWhereItemType('gallery');
+        $gallery_images = $gallery_images->getPairs('item_id', 'image');
+
+        // Gallery navigation
+        ob_start(); ?>
+        <ul id="filters" data-option-key="filter" class="nav nav-pills nav-pills-portfolio">
+            <li class="active"><a href="#" data-toggle="pill" data-filter="*"><?= w('all'); ?></a></li>
+            <?php foreach ($gallery_categories as $category_id => $category): ?>
+
+            <?php
+                $category_class = strtolower(htmlspecialchars(str_replace(' ','-',$category)));
+                $gallery_cat_classes[$category_id] = $category_class;
+            ?>
+
+            <li><a href="#" data-toggle="pill" data-filter=".<?= $category_class ?>"><?= htmlspecialchars($category) ?></a></li>
+
+            <?php endforeach; ?>
+        </ul>
+        <?php $res['nav'] = ob_get_clean();
+
+        // Gallery grid
+        ob_start(); ?>
+            <?php foreach ($gallery_items as $item_id => $item): ?>
+                <?php $first_image = array_search($item->getId(), $gallery_images); ?>
+                <!-- PORTFOLIO ITEM 1 -->
+                <div class="col-md-3 col-sm-3 small hp-wrapper element <?= $gallery_cat_classes[$item->getCategoryId()]; ?>">
+                    <a href="#" class="hover-shade"></a>
+                    <a href="#" class="top-link">
+                        <img alt="" style="width: 220px; height: 160px;" src="<?= $first_image; ?>"></a>
+                    <div class="bottom-block">
+                        <a href="#"><?= $item->getTitle(); ?></a>
+                        <p><?= $gallery_categories[$item->getCategoryId()]; ?></p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php $res['grid'] = ob_get_clean();
+        return $res;
+    }
 }
