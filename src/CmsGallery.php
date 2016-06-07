@@ -64,10 +64,8 @@ class CmsGallery
                 ->enableOrderableColumn()
                 ->enableTranslationColumn()
             )
-
             ->addColumn(ColumnData::getInstance('category_id')
                 ->enableOrderableColumn()
-                ->enableTranslationColumn()
                 ->enableNarrowWidth()
                 ->disableNewlines()
                 ->setPairedDataOptionsForKeys($categories->getPairs('title'))
