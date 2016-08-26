@@ -193,11 +193,11 @@ class ModuleGallery implements IModule {
                 <?php $first_image = array_search($item->getId(), $gallery_images); ?>
                 <!-- PORTFOLIO ITEM 1 -->
                 <div class="col-md-3 col-sm-3 small hp-wrapper element <?= $gallery_cat_classes[$item->getCategoryId()]; ?>">
-                    <a href="#" class="hover-shade"></a>
-                    <a href="#" class="top-link">
+                    <a href="<?= $item->getId() ?>" class="hover-shade"></a>
+                    <a href="<?= $item->getId() ?>" class="top-link">
                         <img alt="" style="width: 220px; height: 160px;" src="<?= $first_image; ?>"></a>
                     <div class="bottom-block">
-                        <a href="#"><?= $item->getTitle(); ?></a>
+                        <a href="<?= $item->getId() ?>"><?= $item->getTitle(); ?></a>
                         <p><?= $gallery_categories[$item->getCategoryId()]; ?></p>
                     </div>
                 </div>
