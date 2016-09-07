@@ -295,7 +295,7 @@ class CmsGallery
                 ->setHref('?p=' . P . '&do=_categories_delete&id={%id%}')
             )
             ->attachFilterForm(
-                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=categories_add">'. __('Add Category') .'/a>')
+                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=categories_add">'. __('Add Category') .'</a>')
                     ->addFilter('Title', Text::getInstance('title')
                         ->enableActAsLike()
                     )
