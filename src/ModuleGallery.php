@@ -175,14 +175,15 @@ class ModuleGallery implements IModule {
         <ul id="filters" data-option-key="filter" class="nav nav-pills nav-pills-portfolio">
             <li class="active"><a href="#" data-toggle="pill" data-filter="*"><?= w('all'); ?></a></li>
             <?php foreach ($gallery_categories as $category_id => $category):
-                if ($gallery_id && $category_id != $gallery_id) {
-                continue;
-                }
                 ?>
 
             <?php
                 $category_class = strtolower(htmlspecialchars(str_replace(' ','-',$category)));
                 $gallery_cat_classes[$category_id] = $category_class;
+                
+                if ($gallery_id && $category_id != $gallery_id) {
+                    continue;
+                }
             ?>
 
             <li><a href="#" data-toggle="pill" data-filter=".<?= $category_class ?>"><?= htmlspecialchars($category) ?></a></li>
