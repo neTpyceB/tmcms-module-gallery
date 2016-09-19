@@ -180,7 +180,7 @@ class ModuleGallery implements IModule {
             <?php
                 $category_class = strtolower(htmlspecialchars(str_replace(' ','-',$category)));
                 $gallery_cat_classes[$category_id] = $category_class;
-                
+
                 if ($gallery_id && $category_id != $gallery_id) {
                     continue;
                 }
@@ -194,7 +194,11 @@ class ModuleGallery implements IModule {
 
         // Gallery grid
         ob_start(); ?>
-            <?php foreach ($gallery_items as $item_id => $item): ?>
+            <?php foreach ($gallery_items as $item_id => $item):
+            if ($gallery_id && $item->getCategoryId() != $gallery_id) {
+                continue;
+            }
+            ?>
                 <?php $first_image = array_search($item->getId(), $gallery_images); ?>
                 <!-- PORTFOLIO ITEM 1 -->
                 <div class="col-md-3 col-sm-3 small hp-wrapper element <?= $gallery_cat_classes[$item->getCategoryId()]; ?>">
