@@ -154,7 +154,7 @@ class ModuleGallery implements IModule {
 
         return $gallery_repository->getPairs('title');
     }
-    public static function getGalleryView() {
+    public static function getGalleryView($gallery_id = 0) {
 
         // Get gallery items
         $gallery_items = new GalleryEntityRepository();
@@ -174,7 +174,11 @@ class ModuleGallery implements IModule {
         ob_start(); ?>
         <ul id="filters" data-option-key="filter" class="nav nav-pills nav-pills-portfolio">
             <li class="active"><a href="#" data-toggle="pill" data-filter="*"><?= w('all'); ?></a></li>
-            <?php foreach ($gallery_categories as $category_id => $category): ?>
+            <?php foreach ($gallery_categories as $category_id => $category):
+                if ($gallery_id && $category_id != $gallery_id) {
+                continue;
+                }
+                ?>
 
             <?php
                 $category_class = strtolower(htmlspecialchars(str_replace(' ','-',$category)));
