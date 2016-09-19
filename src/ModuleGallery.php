@@ -195,7 +195,7 @@ class ModuleGallery implements IModule {
         // Gallery grid
         ob_start(); ?>
             <?php foreach ($gallery_items as $item_id => $item):
-            if ($gallery_id && $item->getCategoryId() != $gallery_id) {
+            if (!isset($gallery_cat_classes[$item->getCategoryId()])) {
                 continue;
             }
             ?>
