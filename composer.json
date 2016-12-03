@@ -1,15 +1,15 @@
 {
-  "name": "neTpyceB/TMCms-module-gallery",
+  "name": "devp-eu/tmcms-module-gallery",
   "type": "library",
   "description": "Module Gallery for TMCms",
-  "keywords": ["module", "gallery"],
-  "homepage": "http://devp.lv/",
+  "keywords": ["module", "gallery", "TMCms"],
+  "homepage": "http://devp.eu/",
   "license": "proprietary",
   "authors": [
     {
       "name": "Vadims Petrusevs",
-      "email": "info@devp.lv",
-      "homepage": "http://devp.lv/",
+      "email": "info@devp.eu",
+      "homepage": "http://devp.eu/",
       "role": "Developer"
     }
   ],
@@ -18,13 +18,7 @@
       "TMCms\\Modules\\Gallery\\": "src"
     }
   },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "git@github.com:neTpyceB/TMCms-module-images.git"
-    }
-  ],
   "require": {
-    "neTpyceB/TMCms-module-images": "dev-master"
+    "devp-eu/tmcms-module-images": "dev-master"
   }
 }
