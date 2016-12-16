@@ -78,9 +78,11 @@ class ModuleGallery implements IModule {
             $existing_images_in_db[$image['id']] = $image['image'];
         }
 
+        $no_slash_dir = rtrim(DIR_BASE, '/');
+
         // Files on disk
-        FileSystem::mkDir(DIR_BASE . $path);
-        $existing_files = array_diff(scandir(DIR_BASE . $path), ['.', '..']);
+        FileSystem::mkDir($no_slash_dir . $path);
+        $existing_files = array_diff(scandir($no_slash_dir . $path), ['.', '..']);
         $existing_images_on_disk = [];
         foreach ($existing_files as $image) {
             /** @var string $image */
@@ -108,13 +110,15 @@ class ModuleGallery implements IModule {
         }
         $image_collection->clearCollectionCache(); // Clear cache, because we may have deleted as few images
 
-        echo Columns::getInstance()
-            ->add(BreadCrumbs::getInstance()->addCrumb($item->getTitle(), '?p='. P .'&highlight='. $item->getId()))
+
+        BreadCrumbs::getInstance()
+            ->addCrumb($item->getTitle(), '?p='. P .'&highlight='. $item->getId())
         ;
 
         echo  CmsForm::getInstance()
-                ->addField('', CmsHtml::getInstance('images')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
-            . '<br>' ;
+            ->setFormTitle('Gallery items')
+            ->addField('', CmsHtml::getInstance('images')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
+        ;
 
         echo GalleryHtml::getInstance($image_collection->getAsArrayOfObjectData(true))
             ->linkActive('_images_active')
