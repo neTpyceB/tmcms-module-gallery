@@ -2,7 +2,6 @@
 
 namespace TMCms\Modules\Gallery;
 
-use TMCms\Admin\Menu;
 use TMCms\Admin\Messages;
 use TMCms\DB\SQL;
 use TMCms\Files\FileSystem;
@@ -34,10 +33,6 @@ use TMCms\Modules\Images\Entity\ImageEntityRepository;
 use TMCms\HTML\Cms\CmsGallery as AdminGallery;
 
 defined('INC') or exit;
-
-Menu::getInstance()
-    ->addSubMenuItem('categories')
-;
 
 class CmsGallery
 {
@@ -145,6 +140,7 @@ class CmsGallery
 
         // Add new files
         foreach ($diff_new_files as $file_path) {
+            /** @var ImageEntity $image */
             $image = new ImageEntity;
             $image->setItemType('gallery');
             $image->setItemId($gallery->getId());
