@@ -20,8 +20,6 @@ use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Element\CmsInputFile;
 use TMCms\HTML\Cms\Element\CmsInputText;
 use TMCms\HTML\Cms\Element\CmsSelect;
-use TMCms\HTML\Cms\Filter\Text;
-use TMCms\HTML\Cms\FilterForm;
 use TMCms\HTML\Cms\Widget\FileManager;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
@@ -34,13 +32,19 @@ use TMCms\HTML\Cms\CmsGallery as AdminGallery;
 
 defined('INC') or exit;
 
+BreadCrumbs::getInstance()
+    ->addCrumb(__('Galleries'))
+;
+
 class CmsGallery
 {
     /** gallery */
 
     public static function _default()
     {
-        $form = self::__gallery_add_edit_form()
+        echo self::__gallery_add_edit_form()
+            ->setFormTitle('Add category')
+            ->setCollapsed(true)
             ->setAction('?p='. P .'&do=_gallery_add')
             ->setSubmitButton(new CmsButton(__('Add')))
         ;
@@ -50,11 +54,8 @@ class CmsGallery
 
         $categories = new GalleryCategoryEntityRepository();
 
-        echo CmsFieldset::getInstance('Add Gallery', $form);
-
-        echo '<br><br>';
-
         echo CmsTable::getInstance()
+            ->setHeadingTitle('Galleries')
             ->addData($galleries)
             ->addColumn(ColumnData::getInstance('title')
                 ->enableOrderableColumn()
@@ -101,7 +102,7 @@ class CmsGallery
 
         $gallery = new GalleryEntity($id);
 
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb($gallery->getTitle(), '?p='. P .'&highlight='. $gallery->getId())
             ->addCrumb('Images')
         ;
@@ -125,11 +126,13 @@ class CmsGallery
         // Get images on disk
         $path = ModuleImages::getPathForItemImages('gallery', $gallery->getId());
 
+        $dir_Base_no_slash = rtrim(DIR_BASE, '/');
+
         // Files on disk
-        FileSystem::mkDir(DIR_BASE . $path);
+        FileSystem::mkDir($dir_Base_no_slash . $path);
 
         $existing_images_on_disk = [];
-        foreach (array_diff(scandir(DIR_BASE . $path), ['.', '..']) as $image) {
+        foreach (array_diff(scandir($dir_Base_no_slash . $path), ['.', '..']) as $image) {
             /** @var string $image */
             $existing_images_on_disk[] = $path . $image;
         }
@@ -262,7 +265,12 @@ class CmsGallery
         $galleries = new GalleryEntityRepository();
         $categories->addSimpleSelectFieldsAsString('(SELECT COUNT(*) FROM `'. $galleries->getDbTableName() .'` AS `l` WHERE `l`.`category_id` = `'. $categories->getDbTableName() .'`.`id`) AS `galleries`');
 
+        BreadCrumbs::getInstance()
+            ->addAction('Add Category', '?p=' . P . '&do=categories_add')
+        ;
+
         echo CmsTable::getInstance()
+            ->setHeadingTitle('Categories')
             ->addData($categories)
             ->addColumn(ColumnData::getInstance('title')
                 ->enableTranslationColumn()
@@ -289,12 +297,6 @@ class CmsGallery
             )
             ->addColumn(ColumnDelete::getInstance()
                 ->setHref('?p=' . P . '&do=_categories_delete&id={%id%}')
-            )
-            ->attachFilterForm(
-                FilterForm::getInstance()->setCaption('<a href="?p=' . P . '&do=categories_add">'. __('Add Category') .'</a>')
-                    ->addFilter('Title', Text::getInstance('title')
-                        ->enableActAsLike()
-                    )
             );
     }
 
@@ -302,6 +304,7 @@ class CmsGallery
     {
         return CmsFormHelper::outputForm(ModuleGallery::$tables['categories'], [
             'dara' => $data,
+            'title' => $data ? __('Edit category') : __('Add category'),
             'fields' => [
                 'title' => [
                     'translation' => true
@@ -317,6 +320,10 @@ class CmsGallery
 
     public static function categories_add()
     {
+        BreadCrumbs::getInstance()
+            ->addCrumb(__('Add category'))
+        ;
+
         echo self::__categories_add_edit_form()
             ->setAction('?p=' . P . '&do=_categories_add')
             ->setSubmitButton(new CmsButton('Add'))
@@ -325,12 +332,18 @@ class CmsGallery
 
     public static function categories_edit()
     {
+
         $id = (int)$_GET['id'];
 
         $category = new GalleryCategoryEntity($id);
 
+        BreadCrumbs::getInstance()
+            ->addCrumb($category->getTitle())
+        ;
+
         echo self::__categories_add_edit_form()
             ->addData($category)
+            ->setFormTitle('Edit category')
             ->setAction('?p=' . P . '&do=_categories_edit&id=' . $id)
             ->setSubmitButton(new CmsButton('Update'))
         ;
