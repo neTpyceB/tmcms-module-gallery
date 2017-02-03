@@ -69,7 +69,7 @@ class ModuleGallery implements IModule {
         $images = $image_collection->getAsArrayOfObjectData();
 
         // Get images on disk
-        $path = ModuleImages::getPathForItemImages($class, $item->getId());
+        $path = str_replace('\\', '/', ModuleImages::getPathForItemImages($class, $item->getId()));
 
         // Files in DB
         $existing_images_in_db = [];
