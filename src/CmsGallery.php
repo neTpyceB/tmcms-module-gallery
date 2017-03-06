@@ -4,7 +4,6 @@ namespace TMCms\Modules\Gallery;
 
 use TMCms\Admin\Messages;
 use TMCms\DB\SQL;
-use TMCms\Files\FileSystem;
 use TMCms\HTML\BreadCrumbs;
 use TMCms\HTML\Cms\CmsForm;
 use TMCms\HTML\Cms\CmsFormHelper;
@@ -15,18 +14,13 @@ use TMCms\HTML\Cms\Column\ColumnDelete;
 use TMCms\HTML\Cms\Column\ColumnEdit;
 use TMCms\HTML\Cms\Column\ColumnOrder;
 use TMCms\HTML\Cms\Element\CmsButton;
-use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Element\CmsInputText;
 use TMCms\HTML\Cms\Element\CmsSelect;
-use TMCms\HTML\Cms\Widget\FileManager;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
 use TMCms\Modules\Gallery\Entity\GalleryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
-use TMCms\Modules\Images\ModuleImages;
 use TMCms\Modules\Images\Entity\ImageEntity;
-use TMCms\Modules\Images\Entity\ImageEntityRepository;
-use TMCms\HTML\Cms\CmsGallery as AdminGallery;
 
 defined('INC') or exit;
 
@@ -115,70 +109,7 @@ class CmsGallery
             ->setSubmitButton(new CmsButton(__('Update')));
 
 
-        // Images
-
-        // Get existing images in DB
-        $image_collection = new ImageEntityRepository;
-        $image_collection->setWhereItemType('gallery');
-        $image_collection->setWhereItemId($gallery->getId());
-        $image_collection->addOrderByField();
-
-        $existing_images_in_db = $image_collection->getPairs('image');
-
-        // Get images on disk
-        $path = ModuleImages::getPathForItemImages('gallery', $gallery->getId());
-
-        $dir_Base_no_slash = rtrim(DIR_BASE, '/');
-
-        // Files on disk
-        FileSystem::mkDir($dir_Base_no_slash . $path);
-
-        $existing_images_on_disk = [];
-        foreach (array_diff(scandir($dir_Base_no_slash . $path), ['.', '..']) as $image) {
-            /** @var string $image */
-            $existing_images_on_disk[] = $path . $image;
-        }
-
-        // Find difference
-        $diff_non_file_db = array_diff($existing_images_in_db, $existing_images_on_disk);
-        $diff_new_files = array_diff($existing_images_on_disk, $existing_images_in_db);
-
-        // Add new files
-        foreach ($diff_new_files as $file_path) {
-            /** @var ImageEntity $image */
-            $image = new ImageEntity;
-            $image->setItemType('gallery');
-            $image->setItemId($gallery->getId());
-            $image->setImage($file_path);
-            $image->setOrder(SQL::getNextOrder($image->getDbTableName(), 'order', 'item_type', 'gallery'));
-            $image->save();
-        }
-
-        // Delete entries where no more files
-        foreach ($diff_non_file_db as $id => $file_path) {
-            $image = new ImageEntity($id);
-            $image->deleteObject();
-        }
-
-        $image_collection->clearCollectionCache(); // Clear cache, because we may have deleted as few images
-
-        echo  CmsForm::getInstance()
-                ->addField('', CmsHtml::getInstance('images')
-                    ->setWidget(FileManager::getInstance()
-                        ->enablePageReloadOnClose()
-                        ->path($path)
-                    )
-                )
-            . '<br>' ;
-
-        echo AdminGallery::getInstance($image_collection->getAsArrayOfObjectData(true))
-            ->linkActive('_images_active')
-            ->linkMove('_images_move')
-            ->linkDelete('_images_delete')
-            ->enableResizeProcessor()
-            ->imageWidth(270)
-            ->imageHeight(200)
-        ;
+        echo ModuleGallery::getViewForCmsModules($gallery);
     }
 
     public static function _gallery_add()
@@ -402,6 +333,24 @@ class CmsGallery
 
         // Show message to user
         Messages::sendGreenAlert('Image removed');
+
+        back();
+    }
+
+    public function _images_active()
+    {
+        $id = $_GET['id'];
+
+        // Delete file
+        $image = new ImageEntity($id);
+        $image->flipBoolValue('active');
+        $image->save();
+
+        Messages::sendGreenAlert('Image updated');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
 
         back();
     }

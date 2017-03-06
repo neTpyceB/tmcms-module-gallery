@@ -16,10 +16,10 @@ use TMCms\Modules\Images\Entity\ImageEntityRepository;
  * @method int getOrder()
  * @method int getCategoryId()
  *
- * @method setTitle(array)
- * @method setActive(bool)
- * @method setOrder(int)
- * @method setCategoryId(int)
+ * @method $this setTitle(string $title)
+ * @method $this setActive(int $flag)
+ * @method $this setOrder(int $order)
+ * @method $this setCategoryId(int $category_id)
  */
 class GalleryEntity extends Entity {
     protected $translation_fields = ['title'];

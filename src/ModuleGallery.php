@@ -5,9 +5,8 @@ namespace TMCms\Modules\Gallery;
 use TMCms\Admin\Messages;
 use TMCms\DB\SQL;
 use TMCms\Files\FileSystem;
-use TMCms\HTML\BreadCrumbs;
 use TMCms\HTML\Cms\CmsForm;
-use TMCms\HTML\Cms\CmsGallery as GalleryHtml;
+use TMCms\HTML\Cms\CmsGallery;
 use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Widget\FileManager;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
@@ -50,6 +49,7 @@ class ModuleGallery implements IModule {
     {
         $image_repository = new ImageEntityRepository();
         $image_repository->setWhereItemType('gallery');
+        $image_repository->setWhereActive(1);
 
         if ($gallery) {
             $image_repository->setWhereItemId($gallery->getId());
@@ -63,30 +63,26 @@ class ModuleGallery implements IModule {
 
         $class = strtolower(join('', array_slice(explode('\\', get_class($item)), -1)));
 
+        // Images
+
         // Get existing images in DB
         $image_collection = new ImageEntityRepository;
-        $image_collection->setWhereItemType($class);
+        $image_collection->setWhereItemType('gallery');
         $image_collection->setWhereItemId($item->getId());
         $image_collection->addOrderByField();
-        $images = $image_collection->getAsArrayOfObjectData();
+
+        $existing_images_in_db = $image_collection->getPairs('image');
 
         // Get images on disk
-        $path = str_replace('\\', '/', ModuleImages::getPathForItemImages($class, $item->getId()));
+        $path = ModuleImages::getPathForItemImages('gallery', $item->getId());
 
-        // Files in DB
-        $existing_images_in_db = [];
-        foreach ($images as $image) {
-            /** @var ImageEntity $image */
-            $existing_images_in_db[$image['id']] = $image['image'];
-        }
-
-        $no_slash_dir = rtrim(DIR_BASE, '/');
+        $dir_Base_no_slash = rtrim(DIR_BASE, '/');
 
         // Files on disk
-        FileSystem::mkDir($no_slash_dir . $path);
-        $existing_files = array_diff(scandir($no_slash_dir . $path), ['.', '..']);
+        FileSystem::mkDir($dir_Base_no_slash . $path);
+
         $existing_images_on_disk = [];
-        foreach ($existing_files as $image) {
+        foreach (array_diff(scandir($dir_Base_no_slash . $path), ['.', '..']) as $image) {
             /** @var string $image */
             $existing_images_on_disk[] = $path . $image;
         }
@@ -97,11 +93,13 @@ class ModuleGallery implements IModule {
 
         // Add new files
         foreach ($diff_new_files as $file_path) {
+            /** @var ImageEntity $image */
             $image = new ImageEntity;
-            $image->setItemType($class);
+            $image->setActive(1);
+            $image->setItemType('gallery');
             $image->setItemId($item->getId());
             $image->setImage($file_path);
-            $image->setOrder(SQL::getNextOrder(ModuleImages::$tables['images'], 'order', 'item_type', $class));
+            $image->setOrder(SQL::getNextOrder($image->getDbTableName(), 'order', 'item_type', 'gallery'));
             $image->save();
         }
 
@@ -110,20 +108,22 @@ class ModuleGallery implements IModule {
             $image = new ImageEntity($id);
             $image->deleteObject();
         }
+
+        $image_collection->addSimpleSelectFields(['id', 'image', 'active', 'order']);
         $image_collection->clearCollectionCache(); // Clear cache, because we may have deleted as few images
 
-
-        BreadCrumbs::getInstance()
-            ->addCrumb($item->getTitle(), '?p='. P .'&highlight='. $item->getId())
-        ;
-
         echo  CmsForm::getInstance()
-            ->setFormTitle('Gallery items')
-            ->addField('', CmsHtml::getInstance('images')->setWidget(FileManager::getInstance()->enablePageReloadOnClose()->path($path)))
-        ;
+                ->addField('', CmsHtml::getInstance('images')
+                    ->setWidget(FileManager::getInstance()
+                        ->enablePageReloadOnClose()
+                        ->path($path)
+                    )
+                )
+            . '<br>';
 
-        echo GalleryHtml::getInstance($image_collection->getAsArrayOfObjectData(true))
+        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData(true))
             ->linkActive('_images_active')
+            ->activeAjax(true)
             ->linkMove('_images_move')
             ->linkDelete('_images_delete')
             ->enableResizeProcessor()
