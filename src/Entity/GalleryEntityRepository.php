@@ -5,8 +5,7 @@ namespace TMCms\Modules\Gallery\Entity;
 use TMCms\Orm\EntityRepository;
 
 class GalleryEntityRepository extends EntityRepository {
-    protected $db_table = 'm_gallery';
-
+    protected $translation_fields = ['title'];
     protected $table_structure = [
         'fields' => [
             'category_id' => [
@@ -20,6 +19,9 @@ class GalleryEntityRepository extends EntityRepository {
             ],
             'active' => [
                 'type' => 'bool',
+            ],
+            'ts_created' => [
+                'type' => 'ts',
             ],
             'order' => [
                 'type' => 'int',

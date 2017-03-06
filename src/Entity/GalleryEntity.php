@@ -22,7 +22,6 @@ use TMCms\Modules\Images\Entity\ImageEntityRepository;
  * @method setCategoryId(int)
  */
 class GalleryEntity extends Entity {
-    protected $db_table = 'm_gallery';
     protected $translation_fields = ['title'];
 
     // Before delete object

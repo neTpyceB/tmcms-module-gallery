@@ -3,12 +3,10 @@
 namespace TMCms\Modules\Gallery;
 
 use TMCms\Admin\Messages;
-use TMCms\Admin\Users;
 use TMCms\DB\SQL;
 use TMCms\Files\FileSystem;
 use TMCms\HTML\BreadCrumbs;
 use TMCms\HTML\Cms\CmsForm;
-use TMCms\HTML\Cms\Columns;
 use TMCms\HTML\Cms\CmsGallery as GalleryHtml;
 use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Widget\FileManager;
@@ -27,16 +25,18 @@ defined('INC') or exit;
 class ModuleGallery implements IModule {
     use singletonInstanceTrait;
 
-	public static $tables = array(
-		'galleries' => 'm_gallery',
-		'categories' => 'm_gallery_categories'
-	);
+    /**
+     * @param string $slug
+     * @return GalleryCategoryEntityRepository
+     */
+    public static function getCategoryBySlug($slug)
+    {
+        /** @var GalleryCategoryEntityRepository $category */
+        $category = GalleryCategoryEntityRepository::findOneEntityByCriteria([
+            'slug' => $slug,
+        ]);
 
-    public static function getCategoryPairs() {
-        $category_repository = new GalleryCategoryEntityRepository();
-        $category_repository->addOrderByField('title');
-
-        return $category_repository->getPairs('title');
+        return $category;
     }
 
     public static function getGalleryImagesPath($id)
@@ -158,6 +158,7 @@ class ModuleGallery implements IModule {
 
         return $gallery_repository->getPairs('title');
     }
+
     public static function getGalleryView($gallery_id = 0) {
 
         // Get gallery items
@@ -217,5 +218,13 @@ class ModuleGallery implements IModule {
             <?php endforeach; ?>
         <?php $res['grid'] = ob_get_clean();
         return $res;
+    }
+
+    public static function getCategoryPairs()
+    {
+        $category_repository = new GalleryCategoryEntityRepository();
+        $category_repository->addOrderByField('title');
+
+        return $category_repository->getPairs('title');
     }
 }

@@ -6,7 +6,6 @@ use TMCms\Admin\Messages;
 use TMCms\DB\SQL;
 use TMCms\Files\FileSystem;
 use TMCms\HTML\BreadCrumbs;
-use TMCms\HTML\Cms\CmsFieldset;
 use TMCms\HTML\Cms\CmsForm;
 use TMCms\HTML\Cms\CmsFormHelper;
 use TMCms\HTML\Cms\CmsTable;
@@ -17,7 +16,6 @@ use TMCms\HTML\Cms\Column\ColumnEdit;
 use TMCms\HTML\Cms\Column\ColumnOrder;
 use TMCms\HTML\Cms\Element\CmsButton;
 use TMCms\HTML\Cms\Element\CmsHtml;
-use TMCms\HTML\Cms\Element\CmsInputFile;
 use TMCms\HTML\Cms\Element\CmsInputText;
 use TMCms\HTML\Cms\Element\CmsSelect;
 use TMCms\HTML\Cms\Widget\FileManager;
@@ -42,15 +40,12 @@ class CmsGallery
 
     public static function _default()
     {
-        echo self::__gallery_add_edit_form()
-            ->setFormTitle('Add category')
-            ->setCollapsed(true)
-            ->setAction('?p='. P .'&do=_gallery_add')
-            ->setSubmitButton(new CmsButton(__('Add')))
+        BreadCrumbs::getInstance()
+            ->addAction('Add Gallery', '?p=' . P . '&do=gallery_add')
         ;
 
         $galleries = new GalleryEntityRepository();
-        $galleries->addOrderByField('title');
+        $galleries->addOrderByField();
 
         $categories = new GalleryCategoryEntityRepository();
 
@@ -72,6 +67,9 @@ class CmsGallery
                 ->enableNarrowWidth()
                 ->setValue('edit')
             )
+            ->addColumn(ColumnOrder::getInstance('order')
+                ->setHref('?p=' . P . '&do=_gallery_order&id={%id%}')
+            )
             ->addColumn(ColumnActive::getInstance('active')
                 ->setHref('?p=' . P . '&do=_gallery_active&id={%id%}')
                 ->enableOrderableColumn()
@@ -82,18 +80,22 @@ class CmsGallery
         ;
     }
 
+    public static function gallery_add()
+    {
+        echo self::__gallery_add_edit_form()
+            ->setAction('?p=' . P . '&do=_gallery_add')
+            ->setSubmitButton(new CmsButton(__('Next ->')));
+    }
+
     private static function __gallery_add_edit_form()
     {
         return CmsForm::getInstance()
             ->addField('Title', CmsInputText::getInstance('title')
-                ->enableTranslationField()
-            )
-            ->addField('Main image', CmsInputFile::getInstance('image')
+                ->enableTranslation()
             )
             ->addField('Category', CmsSelect::getInstance('category_id')
                 ->setOptions(ModuleGallery::getCategoryPairs())
-            )
-            ;
+            );
     }
 
     public static function gallery_edit()
@@ -179,45 +181,15 @@ class CmsGallery
         ;
     }
 
-    public function _images_delete() {
-        $id = $_GET['id'];
-
-        // Delete file
-        $image = new ImageEntity($id);
-        if (file_exists(DIR_BASE . $image->getImage())) {
-            unlink(DIR_BASE . $image->getImage());
-        }
-
-        // Delete object from DB
-        $image->deleteObject();
-
-        // Show message to user
-        Messages::sendGreenAlert('Image removed');
-
-        back();
-    }
-
-    public function _images_move() {
-        $id = $_GET['id'];
-
-        $image = new ImageEntity($id);
-        $product_id = $image->getItemId();
-
-        SQL::orderCat($id, $image->getDbTableName(), $product_id, 'item_id', $_GET['direct']);
-
-        // Show message to user
-        Messages::sendGreenAlert('Images reordered');
-
-        back();
-    }
-
     public static function _gallery_add()
     {
         $gallery = new GalleryEntity();
         $gallery->loadDataFromArray($_POST);
+        $gallery->setOrder(SQL::getNextOrder($gallery->getDbTableName(), 'order', 'category_id', $gallery->getCategoryId()));
         $gallery->save();
 
-        go('?p=' . P . '&highlight=' . $gallery->getId());
+
+        go('?p=' . P . '&do=gallery_edit&id=' . $gallery->getId());
     }
 
     public static function _gallery_edit()
@@ -252,8 +224,6 @@ class CmsGallery
         go(REF);
     }
 
-
-
     /** categories */
 
     public static function categories()
@@ -286,6 +256,7 @@ class CmsGallery
                 ->disableNewlines()
                 ->enableNarrowWidth()
             )
+            ->addColumn(ColumnData::getInstance('slug'))
             ->addColumn(ColumnOrder::getInstance('order')
                 ->setHref('?p=' . P . '&do=_categories_order&id={%id%}')
                 ->enableNarrowWidth()
@@ -300,14 +271,27 @@ class CmsGallery
             );
     }
 
+    public static function categories_add()
+    {
+        BreadCrumbs::getInstance()
+            ->addCrumb(__('Add category'));
+
+        echo self::__categories_add_edit_form()
+            ->setAction('?p=' . P . '&do=_categories_add')
+            ->setSubmitButton(new CmsButton('Add'));
+    }
+
     private static function __categories_add_edit_form($data = [])
     {
         return CmsFormHelper::outputForm(ModuleGallery::$tables['categories'], [
             'dara' => $data,
             'title' => $data ? __('Edit category') : __('Add category'),
             'fields' => [
+                'slug' => [
+                    'hint' => 'For code reference only',
+                ],
                 'title' => [
-                    'translation' => true
+                    'translation' => true,
                 ]
             ],
             'combine' => true,
@@ -316,18 +300,6 @@ class CmsGallery
                 'active'
             ]
         ]);
-    }
-
-    public static function categories_add()
-    {
-        BreadCrumbs::getInstance()
-            ->addCrumb(__('Add category'))
-        ;
-
-        echo self::__categories_add_edit_form()
-            ->setAction('?p=' . P . '&do=_categories_add')
-            ->setSubmitButton(new CmsButton('Add'))
-        ;
     }
 
     public static function categories_edit()
@@ -374,7 +346,20 @@ class CmsGallery
     {
         $id = (int)$_GET['id'];
 
-        SQL::order($id, ModuleGallery::$tables['categories'], $_GET['direct']);
+        $category = new GalleryCategoryEntity();
+
+        SQL::order($id, $category->getDbTableName(), $_GET['direct']);
+
+        go(REF);
+    }
+
+    public static function _gallery_order()
+    {
+        $id = (int)$_GET['id'];
+
+        $gallery = new GalleryEntity();
+
+        SQL::order($id, $gallery->getDbTableName(), $_GET['direct']);
 
         go(REF);
     }
@@ -398,5 +383,39 @@ class CmsGallery
         $Category->save();
 
         go(REF);
+    }
+
+    public function _images_delete()
+    {
+        $id = $_GET['id'];
+
+        // Delete file
+        $image = new ImageEntity($id);
+        if (file_exists(DIR_BASE . $image->getImage())) {
+            unlink(DIR_BASE . $image->getImage());
+        }
+
+        // Delete object from DB
+        $image->deleteObject();
+
+        // Show message to user
+        Messages::sendGreenAlert('Image removed');
+
+        back();
+    }
+
+    public function _images_move()
+    {
+        $id = $_GET['id'];
+
+        $image = new ImageEntity($id);
+        $product_id = $image->getItemId();
+
+        SQL::orderCat($id, $image->getDbTableName(), $product_id, 'item_id', $_GET['direct']);
+
+        // Show message to user
+        Messages::sendGreenAlert('Images reordered');
+
+        back();
     }
 }
