@@ -8,6 +8,7 @@ use TMCms\Orm\EntityRepository;
  * Class GalleryEntityRepository
  * @package TMCms\Modules\Gallery\Entity
  *
+ * @method $this setWhereActive(int $flag)
  * @method $this setWhereCategoryId(int $category_id)
  */
 class GalleryEntityRepository extends EntityRepository {

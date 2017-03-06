@@ -35,6 +35,7 @@ class ModuleGallery implements IModule {
         /** @var GalleryCategoryEntity $category */
         $category = GalleryCategoryEntityRepository::findOneEntityByCriteria([
             'slug' => $slug,
+            'active' => 1,
         ]);
 
         return $category;
