@@ -10,6 +10,7 @@ use TMCms\HTML\Cms\CmsForm;
 use TMCms\HTML\Cms\CmsGallery as GalleryHtml;
 use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Widget\FileManager;
+use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
 use TMCms\Modules\Gallery\Entity\GalleryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
@@ -27,11 +28,11 @@ class ModuleGallery implements IModule {
 
     /**
      * @param string $slug
-     * @return GalleryCategoryEntityRepository
+     * @return GalleryCategoryEntity
      */
     public static function getCategoryBySlug($slug)
     {
-        /** @var GalleryCategoryEntityRepository $category */
+        /** @var GalleryCategoryEntity $category */
         $category = GalleryCategoryEntityRepository::findOneEntityByCriteria([
             'slug' => $slug,
         ]);

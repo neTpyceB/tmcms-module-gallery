@@ -4,6 +4,12 @@ namespace TMCms\Modules\Gallery\Entity;
 
 use TMCms\Orm\EntityRepository;
 
+/**
+ * Class GalleryEntityRepository
+ * @package TMCms\Modules\Gallery\Entity
+ *
+ * @method $this setWhereCategoryId(int $category_id)
+ */
 class GalleryEntityRepository extends EntityRepository {
     protected $translation_fields = ['title'];
     protected $table_structure = [
