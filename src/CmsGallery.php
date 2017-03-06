@@ -283,7 +283,9 @@ class CmsGallery
 
     private static function __categories_add_edit_form($data = [])
     {
-        return CmsFormHelper::outputForm(ModuleGallery::$tables['categories'], [
+        $category = new GalleryCategoryEntity();
+
+        return CmsFormHelper::outputForm($category->getDbTableName(), [
             'dara' => $data,
             'title' => $data ? __('Edit category') : __('Add category'),
             'fields' => [
