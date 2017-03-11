@@ -24,10 +24,6 @@ use TMCms\Modules\Images\Entity\ImageEntity;
 
 defined('INC') or exit;
 
-BreadCrumbs::getInstance()
-    ->addCrumb(__('Galleries'))
-;
-
 class CmsGallery
 {
     /** gallery */
