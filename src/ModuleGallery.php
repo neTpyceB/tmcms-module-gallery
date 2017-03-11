@@ -153,10 +153,14 @@ class ModuleGallery implements IModule {
         Messages::sendGreenAlert('Image removed');
     }
 
-    public static function getGalleryPairs()
+    public static function getGalleryPairs($filters = [])
     {
         $gallery_repository = new GalleryEntityRepository();
         $gallery_repository->addOrderByField('title');
+
+        if (isset($filters['category_id'])) {
+            $gallery_repository->setWhereCategoryId($filters['category_id']);
+        }
 
         return $gallery_repository->getPairs('title');
     }
