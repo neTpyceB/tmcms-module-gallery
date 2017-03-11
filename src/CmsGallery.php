@@ -156,7 +156,7 @@ class CmsGallery
     public static function categories()
     {
         $categories = new GalleryCategoryEntityRepository();
-        $categories->addSimpleSelectFields(['id', 'title', 'active']);
+        $categories->addSimpleSelectFields(['id', 'title', 'active', 'slug']);
         $categories->addOrderByField();
 
         $galleries = new GalleryEntityRepository();
@@ -173,11 +173,6 @@ class CmsGallery
                 ->enableTranslationColumn()
                 ->enableOrderableColumn()
             )
-            ->addColumn(ColumnEdit::getInstance('edit')
-                ->setHref('?p=' . P . '&do=categories_edit&id={%id%}')
-                ->enableNarrowWidth()
-                ->setValue('edit')
-            )
             ->addColumn(ColumnData::getInstance('galleries')
                 ->enableRightAlign()
                 ->disableNewlines()
@@ -187,7 +182,10 @@ class CmsGallery
             ->addColumn(ColumnOrder::getInstance('order')
                 ->setHref('?p=' . P . '&do=_categories_order&id={%id%}')
                 ->enableNarrowWidth()
-                ->setValue('edit')
+            )
+            ->addColumn(ColumnEdit::getInstance('edit')
+                ->setHref('?p=' . P . '&do=categories_edit&id={%id%}')
+                ->enableNarrowWidth()
             )
             ->addColumn(ColumnActive::getInstance('active')
                 ->setHref('?p=' . P . '&do=_categories_active&id={%id%}')
