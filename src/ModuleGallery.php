@@ -11,13 +11,13 @@ use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Widget\FileManager;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
-use TMCms\Modules\Gallery\Entity\GalleryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
 use TMCms\Modules\Images\ModuleImages;
 use TMCms\Modules\Images\Entity\ImageEntity;
 use TMCms\Modules\Images\Entity\ImageEntityRepository;
 use TMCms\Modules\IModule;
 use TMCms\Orm\Entity;
+use TMCms\Strings\Converter;
 use TMCms\Traits\singletonInstanceTrait;
 
 defined('INC') or exit;
@@ -45,10 +45,12 @@ class ModuleGallery implements IModule {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
     }
 
-    public static function getGalleryImages(GalleryEntity $gallery = NULL)
+    public static function getGalleryImages($gallery = NULL)
     {
+        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($gallery));
+
         $image_repository = new ImageEntityRepository();
-        $image_repository->setWhereItemType('gallery');
+        $image_repository->setWhereItemType($entity_class);
         $image_repository->setWhereActive(1);
 
         if ($gallery) {
@@ -61,20 +63,20 @@ class ModuleGallery implements IModule {
     public static function getViewForCmsModules(Entity $item) {
         ob_start();
 
-        $class = strtolower(join('', array_slice(explode('\\', get_class($item)), -1)));
+        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($item));
 
         // Images
 
         // Get existing images in DB
         $image_collection = new ImageEntityRepository;
-        $image_collection->setWhereItemType('gallery');
+        $image_collection->setWhereItemType($entity_class);
         $image_collection->setWhereItemId($item->getId());
         $image_collection->addOrderByField();
 
         $existing_images_in_db = $image_collection->getPairs('image');
 
         // Get images on disk
-        $path = ModuleImages::getPathForItemImages('gallery', $item->getId());
+        $path = ModuleImages::getPathForItemImages($entity_class, $item->getId());
 
         $dir_Base_no_slash = rtrim(DIR_BASE, '/');
 
@@ -96,10 +98,10 @@ class ModuleGallery implements IModule {
             /** @var ImageEntity $image */
             $image = new ImageEntity;
             $image->setActive(1);
-            $image->setItemType('gallery');
+            $image->setItemType($entity_class);
             $image->setItemId($item->getId());
             $image->setImage($file_path);
-            $image->setOrder(SQL::getNextOrder($image->getDbTableName(), 'order', 'item_type', 'gallery'));
+            $image->setOrder(SQL::getNextOrder($image->getDbTableName(), 'order', 'item_type', $entity_class));
             $image->save();
         }
 
@@ -165,7 +167,9 @@ class ModuleGallery implements IModule {
         return $gallery_repository->getPairs('title');
     }
 
-    public static function getGalleryView($gallery_id = 0) {
+    public static function getGalleryView($gallery)
+    {
+        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($gallery));
 
         // Get gallery items
         $gallery_items = new GalleryEntityRepository();
@@ -178,7 +182,7 @@ class ModuleGallery implements IModule {
 
         // Get gallery images
         $gallery_images = new ImageEntityRepository();
-        $gallery_images->setWhereItemType('gallery');
+        $gallery_images->setWhereItemType($entity_class);
         $gallery_images = $gallery_images->getPairs('item_id', 'image');
 
         // Gallery navigation
@@ -192,7 +196,7 @@ class ModuleGallery implements IModule {
                 $category_class = strtolower(htmlspecialchars(str_replace(' ','-',$category)));
                 $gallery_cat_classes[$category_id] = $category_class;
 
-                if ($gallery_id && $category_id != $gallery_id) {
+                if ($gallery->getId() && $category_id != $gallery->getId()) {
                     continue;
                 }
             ?>
