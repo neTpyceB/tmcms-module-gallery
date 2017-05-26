@@ -45,6 +45,11 @@ class ModuleGallery implements IModule {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
     }
 
+    /**
+     * @param null $gallery
+     *
+     * @return array
+     */
     public static function getGalleryImages($gallery = NULL)
     {
         $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($gallery));
