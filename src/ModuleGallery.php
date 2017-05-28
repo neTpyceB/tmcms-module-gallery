@@ -45,16 +45,21 @@ class ModuleGallery implements IModule {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
     }
 
-    public static function getGalleryImages($gallery = NULL)
+    /**
+     * @param Entity $entity
+     *
+     * @return array
+     */
+    public static function getGalleryImages($entity = NULL)
     {
-        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($gallery));
+        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($entity));
 
         $image_repository = new ImageEntityRepository();
         $image_repository->setWhereItemType($entity_class);
         $image_repository->setWhereActive(1);
 
-        if ($gallery) {
-            $image_repository->setWhereItemId($gallery->getId());
+        if ($entity) {
+            $image_repository->setWhereItemId($entity->getId());
         }
 
         return $image_repository->getAsArrayOfObjects();
