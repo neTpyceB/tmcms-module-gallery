@@ -11,6 +11,7 @@ use TMCms\HTML\Cms\Element\CmsHtml;
 use TMCms\HTML\Cms\Widget\FileManager;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
+use TMCms\Modules\Gallery\Entity\GalleryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
 use TMCms\Modules\Images\ModuleImages;
 use TMCms\Modules\Images\Entity\ImageEntity;
@@ -43,26 +44,6 @@ class ModuleGallery implements IModule {
     public static function getGalleryImagesPath($id)
     {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
-    }
-
-    /**
-     * @param Entity $entity
-     *
-     * @return array
-     */
-    public static function getGalleryImages($entity = NULL)
-    {
-        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($entity));
-
-        $image_repository = new ImageEntityRepository();
-        $image_repository->setWhereItemType($entity_class);
-        $image_repository->setWhereActive(1);
-
-        if ($entity) {
-            $image_repository->setWhereItemId($entity->getId());
-        }
-
-        return $image_repository->getAsArrayOfObjects();
     }
 
     public static function getViewForCmsModules(Entity $item) {
@@ -160,6 +141,11 @@ class ModuleGallery implements IModule {
         Messages::sendGreenAlert('Image removed');
     }
 
+    /**
+     * @param array $filters ['category_id' => 10]
+     *
+     * @return array
+     */
     public static function getGalleryPairs($filters = [])
     {
         $gallery_repository = new GalleryEntityRepository();
@@ -241,5 +227,37 @@ class ModuleGallery implements IModule {
         $category_repository->addOrderByField('title');
 
         return $category_repository->getPairs('title');
+    }
+
+    /**
+     * @param int $gallery_id
+     *
+     * @return array
+     */
+    public static function getImagesByGalleryId($gallery_id)
+    {
+        $gallery = new GalleryEntity($gallery_id);
+
+        return self::getGalleryImages($gallery);
+    }
+
+    /**
+     * @param Entity $entity
+     *
+     * @return array
+     */
+    public static function getGalleryImages($entity = NULL)
+    {
+        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($entity));
+
+        $image_repository = new ImageEntityRepository();
+        $image_repository->setWhereItemType($entity_class);
+        $image_repository->setWhereActive(1);
+
+        if ($entity) {
+            $image_repository->setWhereItemId($entity->getId());
+        }
+
+        return $image_repository->getAsArrayOfObjects();
     }
 }
