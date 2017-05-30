@@ -87,7 +87,7 @@ class ModuleGallery implements IModule {
             $image->setItemType($entity_class);
             $image->setItemId($item->getId());
             $image->setImage($file_path);
-            $image->setOrder(q_value('SELECT `order` FROM `' . $image->getDbTableName() . '` WHERE `item_type` = "' . sql_prepare($entity_class) . '" AND `item_id` = "' . $item->getId() . '" ORDER BY `order` DESC LIMIT 1'));
+            $image->setOrder((int)q_value('SELECT `order` FROM `' . $image->getDbTableName() . '` WHERE `item_type` = "' . sql_prepare($entity_class) . '" AND `item_id` = "' . $item->getId() . '" ORDER BY `order` DESC LIMIT 1') + 1);
             $image->save();
         }
 
