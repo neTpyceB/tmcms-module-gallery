@@ -131,6 +131,21 @@ class ModuleGallery implements IModule {
         Messages::sendGreenAlert('Images reordered');
     }
 
+    public static function activeImageForCmsModules($id)
+    {
+        $image = new ImageEntity($id);
+        $image->flipBoolValue('active');
+        $image->save();
+
+        Messages::sendGreenAlert('Image updated');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        back();
+    }
+
     public static function deleteImageForCmsModules($id) {
         // Delete file
         $image = new ImageEntity($id);
