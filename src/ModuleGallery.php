@@ -268,6 +268,7 @@ class ModuleGallery implements IModule {
         $image_repository = new ImageEntityRepository();
         $image_repository->setWhereItemType($entity_class);
         $image_repository->setWhereActive(1);
+        $image_repository->addOrderByField();
 
         if ($entity) {
             $image_repository->setWhereItemId($entity->getId());
