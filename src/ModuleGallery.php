@@ -169,6 +169,9 @@ class ModuleGallery implements IModule {
         if (isset($filters['category_id'])) {
             $gallery_repository->setWhereCategoryId($filters['category_id']);
         }
+        if (isset($filters['active'])) {
+            $gallery_repository->setWhereActive($filters['active']);
+        }
 
         return $gallery_repository->getPairs('title');
     }
