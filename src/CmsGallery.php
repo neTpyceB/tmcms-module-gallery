@@ -74,7 +74,7 @@ class CmsGallery
     {
         echo self::__gallery_add_edit_form()
             ->setAction('?p=' . P . '&do=_gallery_add')
-            ->setSubmitButton(new CmsButton(__('Next ->')));
+            ->setButtonSubmit(new CmsButton(__('Next ->')));
     }
 
     private static function __gallery_add_edit_form()
@@ -102,7 +102,7 @@ class CmsGallery
         echo self::__gallery_add_edit_form()
             ->addData($gallery)
             ->setAction('?p=' . P . '&do=_gallery_edit&id=' . $id)
-            ->setSubmitButton(new CmsButton(__('Update')));
+            ->setButtonSubmit(new CmsButton(__('Update')));
 
 
         echo ModuleGallery::getViewForCmsModules($gallery);
@@ -203,7 +203,7 @@ class CmsGallery
 
         echo self::__categories_add_edit_form()
             ->setAction('?p=' . P . '&do=_categories_add')
-            ->setSubmitButton(new CmsButton('Add'));
+            ->setButtonSubmit(new CmsButton('Add'));
     }
 
     private static function __categories_add_edit_form($data = [])
@@ -244,7 +244,7 @@ class CmsGallery
             ->addData($category)
             ->setFormTitle('Edit category')
             ->setAction('?p=' . P . '&do=_categories_edit&id=' . $id)
-            ->setSubmitButton(new CmsButton('Update'))
+            ->setButtonSubmit(new CmsButton('Update'))
         ;
     }
 
