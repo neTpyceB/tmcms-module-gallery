@@ -262,9 +262,11 @@ class ModuleGallery implements IModule {
     /**
      * @param Entity $entity
      *
+     * @param int    $limit
+     *
      * @return array
      */
-    public static function getGalleryImages($entity = NULL)
+    public static function getGalleryImages($entity = NULL, int $limit = 0)
     {
         $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($entity));
 
@@ -272,6 +274,10 @@ class ModuleGallery implements IModule {
         $image_repository->setWhereItemType($entity_class);
         $image_repository->setWhereActive(1);
         $image_repository->addOrderByField();
+
+        if ($limit) {
+            $image_repository->setLimit($limit);
+        }
 
         if ($entity) {
             $image_repository->setWhereItemId($entity->getId());
