@@ -104,20 +104,12 @@ class ModuleGallery implements IModule {
                 ->addField('', CmsHtml::getInstance('images')
                     ->setWidget(FileManager::getInstance()
                         ->enablePageReloadOnClose()
-                        ->path($path)
+                        ->setPath($path)
                     )
                 )
             . '<br>';
 
-        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData(true))
-            ->linkActive('_images_active')
-            ->activeAjax(true)
-            ->linkMove('_images_move')
-            ->linkDelete('_images_delete')
-            ->enableResizeProcessor()
-            ->imageWidth(270)
-            ->imageHeight(200)
-        ;
+        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData(true));
 
         return ob_get_clean();
     }
