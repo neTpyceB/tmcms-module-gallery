@@ -3,6 +3,7 @@
 namespace TMCms\Modules\Gallery\Entity;
 
 use TMCms\Orm\EntityRepository;
+use TMCms\Orm\TableStructure;
 
 class GalleryCategoryEntityRepository extends EntityRepository {
     protected $db_table = 'm_gallery_categories';
@@ -11,7 +12,7 @@ class GalleryCategoryEntityRepository extends EntityRepository {
     protected $table_structure = [
         'fields' => [
             'title' => [
-                'type' => 'translation',
+                'type' => TableStructure::FIELD_TYPE_TRANSLATION,
             ],
             'active' => [
                 'type' => 'bool',

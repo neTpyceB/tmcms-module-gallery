@@ -3,6 +3,7 @@
 namespace TMCms\Modules\Gallery\Entity;
 
 use TMCms\Orm\EntityRepository;
+use TMCms\Orm\TableStructure;
 
 /**
  * Class GalleryEntityRepository
@@ -19,7 +20,7 @@ class GalleryEntityRepository extends EntityRepository {
                 'type' => 'index',
             ],
             'title' => [
-                'type' => 'translation',
+                'type' => TableStructure::FIELD_TYPE_TRANSLATION,
             ],
             'image' => [
                 'type' => 'varchar',
@@ -28,7 +29,7 @@ class GalleryEntityRepository extends EntityRepository {
                 'type' => 'bool',
             ],
             'ts_created' => [
-                'type' => 'ts',
+                'type' => TableStructure::FIELD_TYPE_UNSIGNED_INTEGER,
             ],
             'order' => [
                 'type' => 'int',
