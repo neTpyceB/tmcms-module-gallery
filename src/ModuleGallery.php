@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace TMCms\Modules\Gallery;
 
@@ -13,16 +14,19 @@ use TMCms\Modules\Gallery\Entity\GalleryCategoryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryCategoryEntityRepository;
 use TMCms\Modules\Gallery\Entity\GalleryEntity;
 use TMCms\Modules\Gallery\Entity\GalleryEntityRepository;
-use TMCms\Modules\Images\ModuleImages;
 use TMCms\Modules\Images\Entity\ImageEntity;
 use TMCms\Modules\Images\Entity\ImageEntityRepository;
+use TMCms\Modules\Images\ModuleImages;
 use TMCms\Modules\IModule;
 use TMCms\Orm\Entity;
-use TMCms\Strings\Converter;
 use TMCms\Traits\singletonInstanceTrait;
 
-defined('INC') or exit;
+\defined('INC') or exit;
 
+/**
+ * Class ModuleGallery
+ * @package TMCms\Modules\Gallery
+ */
 class ModuleGallery implements IModule {
     use singletonInstanceTrait;
 
@@ -30,7 +34,7 @@ class ModuleGallery implements IModule {
      * @param string $slug
      * @return GalleryCategoryEntity
      */
-    public static function getCategoryBySlug($slug)
+    public static function getCategoryBySlug($slug): GalleryCategoryEntity
     {
         /** @var GalleryCategoryEntity $category */
         $category = GalleryCategoryEntityRepository::findOneEntityByCriteria([
@@ -41,15 +45,24 @@ class ModuleGallery implements IModule {
         return $category;
     }
 
-    public static function getGalleryImagesPath($id)
+    /**
+     * @param $id
+     * @return string
+     */
+    public static function getGalleryImagesPath($id): string
     {
         return DIR_PUBLIC_URL . 'galleries/images/'. $id .'/';
     }
 
-    public static function getViewForCmsModules(Entity $item) {
+    /**
+     * @param Entity $item
+     * @return string
+     */
+    public static function getViewForCmsModules(Entity $item): string
+    {
         ob_start();
 
-        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($item));
+        $entity_class = $item->getUnqualifiedShortClassName();
 
         // Images
 
@@ -70,7 +83,7 @@ class ModuleGallery implements IModule {
         FileSystem::mkDir($dir_Base_no_slash . $path);
 
         $existing_images_on_disk = [];
-        foreach (array_diff(scandir($dir_Base_no_slash . $path), ['.', '..']) as $image) {
+        foreach (array_diff(scandir($dir_Base_no_slash . $path, SCANDIR_SORT_NONE), ['.', '..']) as $image) {
             /** @var string $image */
             $existing_images_on_disk[] = $path . $image;
         }
@@ -87,7 +100,7 @@ class ModuleGallery implements IModule {
             $image->setItemType($entity_class);
             $image->setItemId($item->getId());
             $image->setImage($file_path);
-            $image->setOrder((int)q_value('SELECT `order` FROM `' . $image->getDbTableName() . '` WHERE `item_type` = "' . sql_prepare($entity_class) . '" AND `item_id` = "' . $item->getId() . '" ORDER BY `order` DESC LIMIT 1') + 1);
+            $image->setOrder(q_value('SELECT `order` FROM `' . $image->getDbTableName() . '` WHERE `item_type` = "' . sql_prepare($entity_class) . '" AND `item_id` = "' . $item->getId() . '" ORDER BY `order` DESC LIMIT 1') + 1);
             $image->save();
         }
 
@@ -114,6 +127,10 @@ class ModuleGallery implements IModule {
         return ob_get_clean();
     }
 
+    /**
+     * @param $id
+     * @param $direct
+     */
     public static function orderImageForCmsModules($id, $direct) {
         $image = new ImageEntity($id);
 
@@ -123,6 +140,9 @@ class ModuleGallery implements IModule {
         Messages::sendGreenAlert('Images reordered');
     }
 
+    /**
+     * @param $id
+     */
     public static function activeImageForCmsModules($id)
     {
         $image = new ImageEntity($id);
@@ -138,6 +158,9 @@ class ModuleGallery implements IModule {
         back();
     }
 
+    /**
+     * @param $id
+     */
     public static function deleteImageForCmsModules($id) {
         // Delete file
         $image = new ImageEntity($id);
@@ -153,7 +176,7 @@ class ModuleGallery implements IModule {
      *
      * @return array
      */
-    public static function getGalleryPairs($filters = [])
+    public static function getGalleryPairs(array $filters = []): array
     {
         $gallery_repository = new GalleryEntityRepository();
         $gallery_repository->addOrderByField('title');
@@ -168,9 +191,14 @@ class ModuleGallery implements IModule {
         return $gallery_repository->getPairs('title');
     }
 
-    public static function getGalleryView($gallery)
+    /**
+     * @param Entity $gallery
+     *
+     * @return array
+     */
+    public static function getGalleryView($gallery): array
     {
-        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($gallery));
+        $entity_class = $gallery->getUnqualifiedShortClassName();
 
         // Get gallery items
         $gallery_items = new GalleryEntityRepository();
@@ -178,7 +206,7 @@ class ModuleGallery implements IModule {
         $gallery_items = $gallery_items->getAsArrayOfObjects();
 
         // Get gallery categories
-        $gallery_categories = ModuleGallery::getCategoryPairs();
+        $gallery_categories = self::getCategoryPairs();
         $gallery_cat_classes = [];
 
         // Get gallery images
@@ -209,13 +237,14 @@ class ModuleGallery implements IModule {
         <?php $res['nav'] = ob_get_clean();
 
         // Gallery grid
-        ob_start(); ?>
-            <?php foreach ($gallery_items as $item_id => $item):
+        ob_start();
+            /** @var GalleryEntity $item */
+            foreach ($gallery_items as $item_id => $item):
             if (!isset($gallery_cat_classes[$item->getCategoryId()])) {
                 continue;
             }
             ?>
-                <?php $first_image = array_search($item->getId(), $gallery_images); ?>
+                <?php $first_image = \array_search($item->getId(), $gallery_images, true); ?>
                 <!-- PORTFOLIO ITEM 1 -->
                 <div class="col-md-3 col-sm-3 small hp-wrapper element <?= $gallery_cat_classes[$item->getCategoryId()]; ?>">
                     <a href="<?= $item->getId() ?>" class="hover-shade"></a>
@@ -231,7 +260,10 @@ class ModuleGallery implements IModule {
         return $res;
     }
 
-    public static function getCategoryPairs()
+    /**
+     * @return array
+     */
+    public static function getCategoryPairs(): array
     {
         $category_repository = new GalleryCategoryEntityRepository();
         $category_repository->addOrderByField('title');
@@ -244,7 +276,7 @@ class ModuleGallery implements IModule {
      *
      * @return array
      */
-    public static function getImagesByGalleryId($gallery_id)
+    public static function getImagesByGalleryId($gallery_id): array
     {
         $gallery = new GalleryEntity($gallery_id);
 
@@ -258,9 +290,9 @@ class ModuleGallery implements IModule {
      *
      * @return array
      */
-    public static function getGalleryImages($entity = NULL, int $limit = 0)
+    public static function getGalleryImages($entity = NULL, int $limit = 0): array
     {
-        $entity_class = strtolower(Converter::classWithNamespaceToUnqualifiedShort($entity));
+        $entity_class = $entity->getUnqualifiedShortClassName();
 
         $image_repository = new ImageEntityRepository();
         $image_repository->setWhereItemType($entity_class);
