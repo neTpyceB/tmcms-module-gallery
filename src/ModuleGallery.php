@@ -62,7 +62,7 @@ class ModuleGallery implements IModule {
     {
         ob_start();
 
-        $entity_class = $item->getUnqualifiedShortClassName();
+        $entity_class = strtolower($item->getUnqualifiedShortClassName());
 
         // Images
 
@@ -198,7 +198,7 @@ class ModuleGallery implements IModule {
      */
     public static function getGalleryView($gallery): array
     {
-        $entity_class = $gallery->getUnqualifiedShortClassName();
+        $entity_class = strtolower($gallery->getUnqualifiedShortClassName());
 
         // Get gallery items
         $gallery_items = new GalleryEntityRepository();
@@ -292,7 +292,7 @@ class ModuleGallery implements IModule {
      */
     public static function getGalleryImages($entity = NULL, int $limit = 0): array
     {
-        $entity_class = $entity->getUnqualifiedShortClassName();
+        $entity_class = strtolower($entity->getUnqualifiedShortClassName());
 
         $image_repository = new ImageEntityRepository();
         $image_repository->setWhereItemType($entity_class);
