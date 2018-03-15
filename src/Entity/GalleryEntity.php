@@ -24,18 +24,15 @@ use TMCms\Modules\Images\Entity\ImageEntityRepository;
 class GalleryEntity extends Entity {
     protected $translation_fields = ['title'];
 
-    // Before delete object
-    public function deleteObject() {
+    public function beforeDelete() {
         // Delete Collection images from DB
         $images_collection = new ImageEntityRepository();
-        $images_collection->setWhereItemType('gallery');
+        $images_collection->setWhereItemType($this);
         $images_collection->setWhereItemId($this->getId());
         $images_collection->deleteObjectCollection();
 
         // Delete files - remove folder
         $path = DIR_BASE . ModuleGallery::getGalleryImagesPath($this->getId());
         FileSystem::remdir($path);
-
-        parent::deleteObject();
     }
 }

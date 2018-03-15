@@ -198,8 +198,6 @@ class ModuleGallery implements IModule {
      */
     public static function getGalleryView($gallery): array
     {
-        $entity_class = strtolower($gallery->getUnqualifiedShortClassName());
-
         // Get gallery items
         $gallery_items = new GalleryEntityRepository();
         $gallery_items->setWhereActive(1);
@@ -211,7 +209,7 @@ class ModuleGallery implements IModule {
 
         // Get gallery images
         $gallery_images = new ImageEntityRepository();
-        $gallery_images->setWhereItemType($entity_class);
+        $gallery_images->setWhereItemType($gallery);
         $gallery_images = $gallery_images->getPairs('item_id', 'image');
 
         // Gallery navigation
@@ -292,10 +290,8 @@ class ModuleGallery implements IModule {
      */
     public static function getGalleryImages($entity = NULL, int $limit = 0): array
     {
-        $entity_class = strtolower($entity->getUnqualifiedShortClassName());
-
         $image_repository = new ImageEntityRepository();
-        $image_repository->setWhereItemType($entity_class);
+        $image_repository->setWhereItemType($entity);
         $image_repository->setWhereActive(1);
         $image_repository->addOrderByField();
 
