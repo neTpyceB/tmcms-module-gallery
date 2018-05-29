@@ -134,7 +134,7 @@ class ModuleGallery implements IModule {
     public static function orderImageForCmsModules($id, $direct) {
         $image = new ImageEntity($id);
 
-        SQL::orderCat($id, $image->getDbTableName(), $image->getItemId(), 'item_id', $direct);
+        SQL::orderCat($id, $image->getDbTableName(), [$image->getItemId(), $image->getItemType()], ['item_id', 'item_type'], $direct);
 
         // Show message to user
         Messages::sendGreenAlert('Images reordered');
@@ -166,6 +166,10 @@ class ModuleGallery implements IModule {
         $image = new ImageEntity($id);
         // Delete object from DB
         $image->deleteObject();
+
+        if (file_exists(DIR_BASE . $image->getImage())) {
+            unlink(DIR_BASE . $image->getImage());
+        }
 
         // Show message to user
         Messages::sendGreenAlert('Image removed');
