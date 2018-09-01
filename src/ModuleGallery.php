@@ -68,6 +68,7 @@ class ModuleGallery implements IModule {
 
         // Get existing images in DB
         $image_collection = new ImageEntityRepository;
+        $image_collection->setGenerateOutputWithIterator(false);
         $image_collection->setWhereItemType($entity_class);
         $image_collection->setWhereItemId($item->getId());
         $image_collection->addOrderByField();
@@ -122,7 +123,7 @@ class ModuleGallery implements IModule {
                 )
             . '<br>';
 
-        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData(true));
+        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData());
 
         return ob_get_clean();
     }
