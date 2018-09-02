@@ -73,7 +73,7 @@ class ModuleGallery implements IModule {
         $image_collection->setWhereItemId($item->getId());
         $image_collection->addOrderByField();
 
-        $existing_images_in_db = $image_collection->getPairs('image');
+        $existing_images_in_db = (clone $image_collection)->getPairs('image');
 
         // Get images on disk
         $path = ModuleImages::getPathForItemImages($entity_class, $item->getId());
@@ -123,7 +123,7 @@ class ModuleGallery implements IModule {
                 )
             . '<br>';
 
-        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData());
+        echo CmsGallery::getInstance($image_collection->getAsArrayOfObjectData(true));
 
         return ob_get_clean();
     }
